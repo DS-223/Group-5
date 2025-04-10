@@ -1,3 +1,5 @@
+## Find the initial UI design in the files
+
 ## 🧠 Problem Definition – Marketing Analytics Project  
 **Project Focus:** Supermarket Bonus Card Program
 

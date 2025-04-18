@@ -11,6 +11,7 @@ pycache/
 !.vscode/settings.json
 env/
 venv/
+venv_docs/
 .DS_Store
 
 

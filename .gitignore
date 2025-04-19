@@ -1,7 +1,7 @@
 # Ignore all markdown files in the feedback directory
 feedback/*.md  
 
-__pycache__/
+pycache/
 *.py[cod]
 
 pycache/
@@ -20,7 +20,7 @@ venv_docs/
 
 
 # Byte-compiled / optimized / DLL files
-__pycache__/
+pycache/
 *.py[cod]
 *$py.class
 

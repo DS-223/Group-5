@@ -8,6 +8,7 @@ pycache/
 .ipynb_checkpoints
 .env
 .venv
+venv_docs
 .idea
 .vscode
 .vscode/*

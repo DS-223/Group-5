@@ -145,6 +145,53 @@ async def list_stores():
     """
     return mock_stores
 
+
+# PUT Request - Update a store by ID
+@app.put("/stores/{store_id}", response_model=Store)
+async def update_store(store_id: int, updated: StoreCreate):
+    """
+    Update a store by its ID.
+
+    **Parameters:**
+    - `store_id (int)`: ID of the store to update.
+    - `updated (StoreCreate)`: Updated store data.
+
+    **Returns:**
+    - `Store`: The updated store.
+
+    **Raises:**
+    - `HTTPException: 404`: If the store is not found.
+    """
+    for i, store in enumerate(mock_stores):
+        if store.store_id == store_id:
+            updated_store = Store(store_id=store_id, **updated.dict())
+            mock_stores[i] = updated_store
+            return updated_store
+    raise HTTPException(status_code=404, detail="Store not found")
+
+
+# DELETE Request - Delete a store by ID
+@app.delete("/stores/{store_id}")
+async def delete_store(store_id: int):
+    """
+    Delete a store by its ID.
+
+    **Parameters:**
+    - `store_id (int)`: ID of the store to delete.
+
+    **Returns:**
+    - `dict`: Success message.
+
+    **Raises:**
+    - `HTTPException: 404`: If the store is not found.
+    """
+    for i, store in enumerate(mock_stores):
+        if store.store_id == store_id:
+            mock_stores.pop(i)
+            return {"message": "Store deleted successfully"}
+    raise HTTPException(status_code=404, detail="Store not found")
+
+
 # ---------------------------
 # BONUS CARD ROUTES
 # ---------------------------
@@ -176,6 +223,29 @@ async def list_cards():
     - `List[Card]`: A list of all bonus cards.
     """
     return mock_cards
+
+
+# DELETE Request - Delete a bonus card by ID
+@app.delete("/cards/{card_id}")
+async def delete_card(card_id: int):
+    """
+    Delete a bonus card by its ID.
+
+    **Parameters:**
+    - `card_id (int)`: ID of the card to delete.
+
+    **Returns:**
+    - `dict`: Success message.
+
+    **Raises:**
+    - `HTTPException: 404`: If the card is not found.
+    """
+    for i, card in enumerate(mock_cards):
+        if card.card_id == card_id:
+            mock_cards.pop(i)
+            return {"message": "Card deleted successfully"}
+    raise HTTPException(status_code=404, detail="Card not found")
+
 
 # ---------------------------
 # TRANSACTION ROUTES

@@ -31,4 +31,14 @@ services:
         condition: service_healthy
 
 
-  
+ds:
+    container_name: ds_service
+    build:
+      context: ./app_components/ds
+      dockerfile: Dockerfile
+    volumes:
+      - ./app_components/ds:/ds
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db

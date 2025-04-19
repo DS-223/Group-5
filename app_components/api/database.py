@@ -1,7 +1,3 @@
-# ============================
-# FILE: database.py
-# ============================
-
 """
 Mock in-memory database module for the Loyalty API.
 This file simulates a database by storing data in Python lists.

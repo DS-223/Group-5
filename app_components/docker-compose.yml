@@ -30,5 +30,17 @@ services:
       db:
         condition: service_healthy
 
-
+  front:
+    container_name: streamlit_front
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    volumes:
+      - ./front:/front
+    ports:
+      - 8502:8502
+    environment:
+      - API_URL=http://back:8000
+    depends_on:
+      - api
   

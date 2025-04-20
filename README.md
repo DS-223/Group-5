@@ -88,17 +88,51 @@ It includes the following structure:
 ```bash
 ├── app_components
 │   ├── api/                  # FastAPI backend
+│       ├── __init__.py
+│       ├── columns.py
+│       ├── database.py
+│       ├── Dockerfile
+│       ├── main.py
+│       ├── requirements.txt
+│       ├── schema.py
 │   ├── ds/                   # Data science notebooks and scripts
-│   └── etl/                  # ETL pipeline logic
-├── └── front/                # Streamlit front-end
-│       ├──pages/             # Streamlit multipage support
+│       ├── notebooks/
+│           ├── model.ipynb
+│       ├── utils/
+│           ├── data_generator.py
+│           ├── recommender.py
+│           ├── rfm_analyzer.py
+│       ├── Dockerfile
+│       ├── ds_main.py
+│       ├── requirements.txt
+│       ├── rfm_results.csv
+│       └── synthetic_retail_data.csv
+│   ├── etl/                  # ETL pipeline logic
+│       ├── data/  
+│       ├── db/
+│           ├── __pycache__/  
+│           └── db_conf.py   
+│       ├── Dockerfile
+│       ├── etl_process.py
+│       ├── requirements.txt  
+│   ├── front/                # Streamlit front-end
+│       ├── pages/             # Streamlit multipage support
+│           ├── Personalized_search.py
+│           ├── Revenue.py
+│           ├── Segmentation.py
+│           ├── Transaction.py 
+│       ├── Dockerfile
+│       ├── requirements.txt    
 │       └── App.py            # Entry point for Streamlit app
 ├── └── .env                  # Environment variables
 ├── docs/                     # Documentation site (MkDocs)
+│   ├── index.md
+│   ├── mkdocs.yml  
 ├── feedback/                 # Instructor feedback files
 ├── docker-compose.yml        # Container orchestration
 ├── LICENSE
 ├── README.md
+├── Website_skeleton.pdf      # Skeleton of the upcoming website
 ├── ERD.pdf                   # Entity Relationship Diagram
 ├── requirements.txt          # Global package requirements
 ```

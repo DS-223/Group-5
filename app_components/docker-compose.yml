@@ -5,6 +5,11 @@ services:
     container_name: postgres-db
     image: postgres:13
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - "5432:5432"
     environment:
@@ -14,6 +19,22 @@ services:
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
 
+  etl:
+    container_name: etl
+    build:
+      context: ./etl
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env    
+    volumes:
+      - ./etl:/etl
+    depends_on: 
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: "exit 0"
 
   api:
     container_name: loyalty_api

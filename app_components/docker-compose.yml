@@ -44,7 +44,7 @@ services:
     ports:
       - 8008:8000
     volumes:
-      - ./app_components/api:/api
+      - ./api:/api
     environment:
       - DATABASE_URL=${DATABASE_URL}
     depends_on:
@@ -52,16 +52,16 @@ services:
         condition: service_healthy
 
   ds:
-      container_name: ds_service
-      build:
-        context: ./ds
-        dockerfile: Dockerfile
-      volumes:
-        - ./app_components/ds:/ds
-      ports:
-        - "3000:3000"
-      depends_on:
-        - db
+    container_name: ds_service
+    build:
+      context: ./ds
+      dockerfile: Dockerfile
+    volumes:
+      - ./ds:/ds
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
       
   front:
     container_name: streamlit_front

@@ -1,6 +1,9 @@
 # Ignore all markdown files in the feedback directory
 feedback/*.md  
 
+# postgres data
+app_components/postgres_data/
+
 pycache/
 *.py[cod]
 

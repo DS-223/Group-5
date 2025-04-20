@@ -2,21 +2,26 @@
 feedback/*.md  
 
 pycache/
+*.py[cod]
+
+pycache/
 .ipynb_checkpoints
 .env
 .venv
+venv_docs
 .idea
 .vscode
 .vscode/*
 !.vscode/settings.json
 env/
 venv/
+venv_docs/
 .DS_Store
 
 
 
 # Byte-compiled / optimized / DLL files
-__pycache__/
+pycache/
 *.py[cod]
 *$py.class
 

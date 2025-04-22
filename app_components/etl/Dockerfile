@@ -22,4 +22,4 @@ COPY . .
 EXPOSE 3000
 
 # Command to run the python file
-CMD ["python", "etl_process.py"]
+CMD ["python", "main.py"]

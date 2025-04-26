@@ -3,3 +3,6 @@ numpy
 faker
 seaborn
 matplotlib
+faker
+lifelines
+google-generativeai

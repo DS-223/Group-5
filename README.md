@@ -116,14 +116,14 @@ It includes the following structure:
 │       ├── etl_process.py
 │       ├── requirements.txt  
 │   ├── front/                # Streamlit front-end
-│       ├── pages/             # Streamlit multipage support
-│           ├── Personalized_search.py
-│           ├── Revenue.py
-│           ├── Segmentation.py
-│           ├── Transaction.py 
+│       ├── pages/            # Streamlit multipage support
+│           ├── 1_Revenue.py
+│           ├── 2_Transaction.py 
+│           ├── 3_Segmentation.py
+│           ├── 4_Personalized_search.py
 │       ├── Dockerfile
 │       ├── requirements.txt    
-│       └── App.py            # Entry point for Streamlit app
+│       └── app.py            # Entry point for Streamlit app
 ├── └── .env                  # Environment variables
 ├── docs/                     # Documentation site (MkDocs)
 │   ├── index.md

@@ -3,8 +3,6 @@ import streamlit as st
 st.set_page_config(page_title="Dashboard", layout="wide")
 mode = st.sidebar.radio("Choose Display Mode:", ("Light Mode", "Dark Mode"))
 
-
-# Custom Turquoise Style
 if mode == "Light Mode":
     st.markdown("""
         <style>
@@ -112,8 +110,5 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-
-
-# Your main content
 st.title("Welcome to the Dashboard")
 st.markdown("Use the sidebar to navigate to different pages")

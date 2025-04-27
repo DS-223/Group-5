@@ -3,14 +3,11 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
-# Set up app
 st.set_page_config(page_title="Transaction Analysis", layout="wide")
 st.title("Transaction Analysis")
 
-# Mode selection
 mode = st.sidebar.radio("Choose Display Mode:", ("Light Mode", "Dark Mode"))
 
-# Sample Data
 dates = pd.date_range(start="2024-01-01", periods=12, freq='M')
 districts = ["North", "South", "East", "West", "Central"]
 
@@ -20,7 +17,6 @@ df = pd.DataFrame({
     "Transactions": np.random.randint(100, 1000, len(dates) * len(districts))
 })
 
-# Line plot
 fig = px.line(
     df, 
     x="Date", 
@@ -28,15 +24,14 @@ fig = px.line(
     color="District", 
     title="Monthly Transactions by District",
     color_discrete_map={
-        "North": "#00b4d8",   # Bright turquoise
-        "South": "#90e0ef",   # Light turquoise
-        "East": "#0077b6",    # Deep turquoise
-        "West": "#48cae4",    # Sky blue turquoise
-        "Central": "#0096c7"  # Fresh strong turquoise
+        "North": "#00b4d8", 
+        "South": "#90e0ef",
+        "East": "#0077b6",
+        "West": "#48cae4",
+        "Central": "#0096c7"
     }
 )
 
-# Dynamic plot background and text based on mode
 if mode == "Light Mode":
     fig.update_layout(
         plot_bgcolor="white",
@@ -64,10 +59,8 @@ else:
         yaxis_tickfont=dict(color="#f0f0f0"),
     )
 
-# Show plot
 st.plotly_chart(fig, use_container_width=True)
 
-# Dynamic page styling
 if mode == "Light Mode":
     st.markdown("""
         <style>

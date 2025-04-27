@@ -3,29 +3,24 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
-# App setup
 st.set_page_config(page_title="Revenue Insights", layout="wide")
 st.title("Revenue Insights")
 
-# Mode selection
 mode = st.sidebar.radio("Choose Display Mode:", ("Light Mode", "Dark Mode"))
 
-# Sample Data
 df = pd.DataFrame({
     "Month": pd.date_range("2024-01-01", periods=12, freq="M")
 })
 df["Revenue"] = np.random.randint(5000, 20000, size=len(df))
 
-# Create bar plot
 fig = px.bar(
     df,
     x="Month",
     y="Revenue",
     title="Monthly Revenue Overview",
-    color_discrete_sequence=["#00b4d8"]  # Turquoise bar
+    color_discrete_sequence=["#00b4d8"]
 )
 
-# Dynamic plot background and text colors
 if mode == "Light Mode":
     fig.update_layout(
         plot_bgcolor="white",
@@ -49,10 +44,8 @@ else:
         yaxis_tickfont=dict(color="#d9fef7"),
     )
 
-# Show plot
 st.plotly_chart(fig, use_container_width=True)
 
-# Dynamic styling
 if mode == "Light Mode":
     st.markdown("""
         <style>

@@ -6,7 +6,7 @@ import zipfile
 import re
 from sqlalchemy import inspect
 from db.db_conf import engine
-from db.columns import DimCustomer, DimCards, DimDate, FactTransaction
+from db.star_schema import DimCustomer, DimCards, DimDate, FactTransaction
 
 def has_shared_strings(file_path: str) -> bool:
     try:

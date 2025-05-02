@@ -75,7 +75,9 @@ def load_dimcustomer_table(discount_cards: pd.DataFrame):
     for _, row in discount_cards.iterrows():
         db.insert_customer(
             customer_key=int(row['ID']),
+            card_code=row['CustomerCardCode'],
             name=row['Name'],
+            RegistrationDate=row['RegistrationDate'].strftime('%Y-%m-%d') if pd.notnull(row['RegistrationDate']) else None,
             birth_date=row['BirthDate'].strftime('%Y-%m-%d') if pd.notnull(row['BirthDate']) else None,
             gender=row['Gender'],
             phone=row['PhoneNumber'],

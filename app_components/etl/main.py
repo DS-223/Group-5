@@ -1,4 +1,7 @@
 from db.create_tables import create_tables
+from extract_load_raw import run as run_etl
+from transform import transform_qarter
+from load import load_dimcustomer_table
 """
 This script orchestrates the ETL (Extract, Transform, Load) process for the project.
 
@@ -29,13 +32,11 @@ Example:
 Output:
 - Prints "Process completed successfully." upon successful execution of the ETL process.
 """
-from extract_load_raw import run as run_etl
-from transform import transform_qarter
-from load import load_dimcustomer_table
+
 
 if __name__ == "__main__":
     create_tables()
-    run_etl()
+    # run_etl()
     discount_cards = transform_qarter() 
     load_dimcustomer_table(discount_cards)
     print("Process completed successfully.")

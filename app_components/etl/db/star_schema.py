@@ -24,7 +24,9 @@ class DimCustomer(Base):
     __tablename__ = "DimCustomer"
 
     CustomerKey = Column(Integer, primary_key=True, autoincrement=True)
+    CustomerCardCode = Column(String(20), unique = True)
     Name = Column(String(150))
+    RegistrationDate = Column(DateTime)
     BirthDate = Column(DateTime)
     Gender = Column(String(150))
     Phone = Column(String(150))

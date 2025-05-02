@@ -35,7 +35,7 @@ def transform_qarter():
     discount_cards = discount_cards.rename(columns={
     "Дисконтная карта": "DiscountCard",
     "Наименование": "Name",
-    "Код карты": "CardCode",
+    "Код карты": "CustomerCardCode",
     "Адрес покупателя": "CustomerAddress",
     "Карты телефон": "PhoneNumber",
     "Дата открытия": "RegistrationDate",
@@ -46,7 +46,7 @@ def transform_qarter():
 
     # Converting columns to string type
     discount_cards['Name'] = discount_cards['Name'].astype(str)
-    discount_cards['CardCode'] = discount_cards['CardCode'].astype(str)
+    discount_cards['CustomerCardCode'] = discount_cards['CustomerCardCode'].astype(str)
     discount_cards['CustomerAddress'] = discount_cards['CustomerAddress'].astype(str)
     discount_cards['PhoneNumber'] = discount_cards['PhoneNumber'].astype(str)
     discount_cards['Gender'] = discount_cards['Gender'].astype(str)
@@ -58,9 +58,11 @@ def transform_qarter():
     discount_cards['Name'] = discount_cards['Name'].str.slice(0, 50)
 
     # Getting rid of invalid card codes
-    df_invalid_cardcode = discount_cards[discount_cards['CardCode'].astype(str).str.len() != 13]
+    df_invalid_cardcode = discount_cards[discount_cards['CustomerCardCode'].astype(str).str.len() != 13]
     discount_cards = discount_cards[~discount_cards.index.isin(df_invalid_cardcode.index)]
 
+    # Dropping duplicate rows
+    discount_cards = discount_cards.drop_duplicates(subset=['CustomerCardCode'])
 
     # Standardizing phone numbers
     discount_cards['PhoneNumber'] = discount_cards['PhoneNumber'].apply(
@@ -107,5 +109,12 @@ def transform_qarter():
     lambda x: x if pd.notnull(x) and len(str(x)) <= 50 else 'Unknown')
 
     return discount_cards
+
+
+def transform_malatia():
+    df = pd.read_sql('SELECT * FROM malatia', engine)
+    return df.head()
+
 if __name__ == "__main__":
     transform_qarter()
+    # print(transform_malatia())

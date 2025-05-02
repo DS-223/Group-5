@@ -38,11 +38,12 @@ class TransactionDatabase:
         self.conn.commit()
         print(f"Date with DateKey {date_key} inserted into DimDate successfully.")
 
-    def insert_customer(self, customer_key, name, birth_date, gender, phone, address):
+    def insert_customer(self, customer_key, card_code, name, RegistrationDate, birth_date, gender, phone, address):
         """Insert a customer record into the DimCustomer table.
 
         Args:
             customer_key (int): The unique key for the customer.
+            card_code (str): The card code associated with the customer. 
             name (str): The customer's name.
             birth_date (str): The customer's birth date in 'YYYY-MM-DD' format.
             gender (str): The customer's gender (e.g., 'Male', 'Female').
@@ -50,9 +51,9 @@ class TransactionDatabase:
             address (str): The customer's address.
         """
     
-        self.cursor.execute('INSERT INTO "DimCustomer" ("CustomerKey", "Name", "BirthDate", "Gender", "Phone", "Address")' \
-        ' VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT ("CustomerKey") DO NOTHING',
-                            (customer_key, name, birth_date, gender, phone, address))
+        self.cursor.execute('INSERT INTO "DimCustomer" ("CustomerKey", "CustomerCardCode", "Name", "RegistrationDate", "BirthDate", "Gender", "Phone", "Address")' \
+        ' VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT ("CustomerKey") DO NOTHING',
+                            (customer_key, card_code, name, RegistrationDate, birth_date, gender, phone, address))
         self.conn.commit()
         print(f"Customer with CustomerKey {customer_key} inserted into DimCustomer successfully.")
 

@@ -278,3 +278,202 @@ async def list_transactions():
     - `List[Transaction]`: A list of all transactions.
     """
     return mock_transactions
+
+
+# --- main.py ---
+
+# from fastapi import FastAPI, Depends, HTTPException
+# from sqlalchemy.orm import Session
+# import pandas as pd
+# from database import get_db
+# import schema
+# from sqlalchemy import text
+
+# app = FastAPI()
+
+# # --- Helper to load real transaction and customer data ---
+# def load_real_data(db: Session):
+#     transactions_query = text("""
+#         SELECT 
+#             TransactionKey,
+#             TransactionDateKey,
+#             CustomerKey,
+#             CardKey,
+#             Amount,
+#             StoreName
+#         FROM FactTransactions
+#     """)
+#     transactions = pd.read_sql(transactions_query, db.bind)
+
+#     customers_query = text("""
+#         SELECT 
+#             CustomerKey,
+#             Name,
+#             BirthDate,
+#             Gender,
+#             Phone,
+#             Address
+#         FROM DimCustomer
+#     """)
+#     customers = pd.read_sql(customers_query, db.bind)
+
+#     merged = transactions.merge(customers, on="CustomerKey", how="left")
+#     return merged
+
+# # --- Customer Endpoints ---
+
+# # Get all customers
+# @app.get("/customers", response_model=list[schema.Customer])
+# def get_customers(db: Session = Depends(get_db)):
+#     query = text("""
+#         SELECT CustomerKey, Name, BirthDate, Gender, Phone, Address
+#         FROM DimCustomer
+#     """)
+#     result = db.execute(query)
+#     customers = [schema.Customer(**dict(row)) for row in result]
+#     return customers
+
+# # Get a specific customer by ID
+# @app.get("/customer/{customer_id}", response_model=schema.Customer)
+# def get_customer(customer_id: int, db: Session = Depends(get_db)):
+#     query = text("""
+#         SELECT CustomerKey, Name, BirthDate, Gender, Phone, Address
+#         FROM DimCustomer
+#         WHERE CustomerKey = :id
+#     """)
+#     result = db.execute(query, {"id": customer_id}).fetchone()
+#     if not result:
+#         raise HTTPException(status_code=404, detail="Customer not found")
+#     return schema.Customer(**dict(result))
+
+# # Create a new customer
+# @app.post("/customer", response_model=schema.Customer)
+# def create_customer(customer: schema.CustomerCreate, db: Session = Depends(get_db)):
+#     query = text("""
+#         INSERT INTO DimCustomer (Name, BirthDate, Gender, Phone, Address)
+#         VALUES (:Name, :BirthDate, :Gender, :Phone, :Address)
+#         RETURNING CustomerKey, Name, BirthDate, Gender, Phone, Address
+#     """)
+#     result = db.execute(query, {
+#         "Name": customer.Name,
+#         "BirthDate": customer.BirthDate,
+#         "Gender": customer.Gender,
+#         "Phone": customer.Phone,
+#         "Address": customer.Address
+#     })
+#     db.commit()
+#     created_customer = result.fetchone()
+#     return schema.Customer(**dict(created_customer))
+
+# # Update an existing customer
+# @app.put("/customer/{customer_id}", response_model=schema.Customer)
+# def update_customer(customer_id: int, customer: schema.CustomerUpdate, db: Session = Depends(get_db)):
+#     existing_customer = db.execute(
+#         text("SELECT * FROM DimCustomer WHERE CustomerKey = :id"),
+#         {"id": customer_id}
+#     ).fetchone()
+
+#     if not existing_customer:
+#         raise HTTPException(status_code=404, detail="Customer not found")
+
+#     update_query = text("""
+#         UPDATE DimCustomer
+#         SET Name = :Name,
+#             BirthDate = :BirthDate,
+#             Gender = :Gender,
+#             Phone = :Phone,
+#             Address = :Address
+#         WHERE CustomerKey = :id
+#         RETURNING CustomerKey, Name, BirthDate, Gender, Phone, Address
+#     """)
+#     result = db.execute(update_query, {
+#         "Name": customer.Name,
+#         "BirthDate": customer.BirthDate,
+#         "Gender": customer.Gender,
+#         "Phone": customer.Phone,
+#         "Address": customer.Address,
+#         "id": customer_id
+#     })
+#     db.commit()
+#     updated_customer = result.fetchone()
+#     return schema.Customer(**dict(updated_customer))
+
+# # Delete a customer
+# @app.delete("/customer/{customer_id}")
+# def delete_customer(customer_id: int, db: Session = Depends(get_db)):
+#     existing_customer = db.execute(
+#         text("SELECT * FROM DimCustomer WHERE CustomerKey = :id"),
+#         {"id": customer_id}
+#     ).fetchone()
+
+#     if not existing_customer:
+#         raise HTTPException(status_code=404, detail="Customer not found")
+
+#     delete_query = text("""
+#         DELETE FROM DimCustomer
+#         WHERE CustomerKey = :id
+#     """)
+#     db.execute(delete_query, {"id": customer_id})
+#     db.commit()
+#     return {"detail": f"Customer {customer_id} deleted successfully."}
+
+# # --- Transaction Endpoints ---
+
+# # Get all transactions
+# @app.get("/transactions", response_model=list[schema.Transaction])
+# def get_transactions(db: Session = Depends(get_db)):
+#     query = text("""
+#         SELECT TransactionKey, TransactionDateKey, CustomerKey, CardKey, Amount, StoreName
+#         FROM FactTransactions
+#     """)
+#     result = db.execute(query)
+#     transactions = [schema.Transaction(**dict(row)) for row in result]
+#     return transactions
+
+# # Get a specific transaction by ID
+# @app.get("/transaction/{transaction_id}", response_model=schema.Transaction)
+# def get_transaction(transaction_id: int, db: Session = Depends(get_db)):
+#     query = text("""
+#         SELECT TransactionKey, TransactionDateKey, CustomerKey, CardKey, Amount, StoreName
+#         FROM FactTransactions
+#         WHERE TransactionKey = :id
+#     """)
+#     result = db.execute(query, {"id": transaction_id}).fetchone()
+#     if not result:
+#         raise HTTPException(status_code=404, detail="Transaction not found")
+#     return schema.Transaction(**dict(result))
+
+# # Create a new transaction
+# @app.post("/transaction", response_model=schema.Transaction)
+# def create_transaction(transaction: schema.TransactionCreate, db: Session = Depends(get_db)):
+#     query = text("""
+#         INSERT INTO FactTransactions (TransactionDateKey, CustomerKey, CardKey, Amount, StoreName)
+#         VALUES (:TransactionDateKey, :CustomerKey, :CardKey, :Amount, :StoreName)
+#         RETURNING TransactionKey, TransactionDateKey, CustomerKey, CardKey, Amount, StoreName
+#     """)
+#     result = db.execute(query, {
+#         "TransactionDateKey": transaction.TransactionDateKey,
+#         "CustomerKey": transaction.CustomerKey,
+#         "CardKey": transaction.CardKey,
+#         "Amount": transaction.Amount,
+#         "StoreName": transaction.StoreName
+#     })
+#     db.commit()
+#     created_transaction = result.fetchone()
+#     return schema.Transaction(**dict(created_transaction))
+
+# # --- Business Logic Endpoint ---
+
+# # # Get top customers by total amount spent
+# # @app.get("/top_customers", response_model=list[schema.TopCustomer])
+# # def get_top_customers(db: Session = Depends(get_db)):
+# #     df = load_real_data(db)
+# #     top_customers = (
+# #         df.groupby("Name")["Amount"]
+# #         .sum()
+# #         .sort_values(ascending=False)
+# #         .reset_index()
+# #         .rename(columns={"Amount": "TotalAmount"})
+# #         .head(10)
+# #     )
+# #     return [schema.TopCustomer(**row) for row in top_customers.to_dict(orient="records")]

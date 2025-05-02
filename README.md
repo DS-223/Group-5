@@ -24,14 +24,6 @@ Problem Statement:
 
 ## 🧰 Project Setup & Instructions
 
-### 📁 Clone the Repository
-
-To get started, clone this repo using:
-
-```bash
-git clone https://github.com/your-username/your-repo-name.git
-cd your-repo-name
-```
 ### 🧪 Install Required Packages
 There are multiple requirements.txt files for different components of the project. To install all dependencies, use the main file or install from each submodule as needed:
 
@@ -39,7 +31,6 @@ There are multiple requirements.txt files for different components of the projec
 ```bash
 # Clone the repository
 git clone https://github.com/DS-223/Group-5.git
-cd smartcrm
 
 # Create and activate virtual environment
 python -m venv venv

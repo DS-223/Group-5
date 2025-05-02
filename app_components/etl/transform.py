@@ -92,11 +92,15 @@ def transform_qarter():
     # Changing the data type of BirthDate, RegistrationDate to datetime
     discount_cards['BirthDate'] = pd.to_datetime(discount_cards['BirthDate'], errors='coerce', dayfirst=True)
     discount_cards['RegistrationDate'] = pd.to_datetime(discount_cards['RegistrationDate'], errors='coerce', dayfirst=True)
+
+    # Removing rows with invalid dates
+    discount_cards.loc[(discount_cards['RegistrationDate'] < discount_cards['BirthDate']) | (discount_cards['RegistrationDate'].dt.year < 2010),
+                       'RegistrationDate'] = pd.NaT
+    discount_cards.loc[discount_cards['BirthDate'].dt.year < 1900, 'BirthDate'] = pd.NaT
     
 
     # Adding an ID column starting from 1
     discount_cards = discount_cards.reset_index(drop=True)
-    print(f"Done! Cleaned {len(discount_cards)} rows.")
     
     discount_cards['ID'] = discount_cards.index + 1
     
@@ -107,7 +111,8 @@ def transform_qarter():
     # Ensuring PhoneNumber is a string and has a maximum length of 50 characters, else just drop it altogether
     discount_cards['PhoneNumber'] = discount_cards['PhoneNumber'].apply(
     lambda x: x if pd.notnull(x) and len(str(x)) <= 50 else 'Unknown')
-
+    
+    print(f"Done! Cleaned {len(discount_cards)} rows.")
     return discount_cards
 
 

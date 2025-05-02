@@ -9,6 +9,24 @@ from db.db_conf import engine
 from db.star_schema import DimCustomer, DimCards, DimDate, FactTransaction
 
 def has_shared_strings(file_path: str) -> bool:
+    """
+    Checks if an Excel file contains a sharedStrings.xml file.
+
+    This function determines whether the specified Excel file (in .xlsx format)
+    includes a sharedStrings.xml file, which is typically used to store shared
+    strings in the workbook.
+
+    Args:
+        file_path (str): The file path to the Excel file to be checked.
+
+    Returns:
+        bool: True if the sharedStrings.xml file exists in the Excel file, 
+              False otherwise or if an error occurs while accessing the file.
+
+    Raises:
+        None: Any exceptions encountered during file access are caught and 
+              result in a return value of False.
+    """
     try:
         with zipfile.ZipFile(file_path) as z:
             return 'xl/sharedStrings.xml' in z.namelist()

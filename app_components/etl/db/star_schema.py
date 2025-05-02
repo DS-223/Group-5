@@ -24,11 +24,11 @@ class DimCustomer(Base):
     __tablename__ = "DimCustomer"
 
     CustomerKey = Column(Integer, primary_key=True, autoincrement=True)
-    Name = Column(String(50))
+    Name = Column(String(150))
     BirthDate = Column(DateTime)
-    Gender = Column(String(10))
-    Phone = Column(String(20))
-    Address = Column(String(100))
+    Gender = Column(String(150))
+    Phone = Column(String(150))
+    Address = Column(String(150))
 
     def __repr__(self):
         return f"<DimCustomer(CustomerKey={self.CustomerKey}, Name={self.Name})>"

@@ -1,41 +1,33 @@
-"""
-Mock in-memory database module for the Loyalty API.
-This file simulates a database by storing data in Python lists.
-"""
+import sqlalchemy as sql
+import sqlalchemy.ext.declarative as declarative
+import sqlalchemy.orm as orm
+from dotenv import load_dotenv
+import os
 
-from typing import List
-from schema import Customer, Store, Card, Transaction
+load_dotenv(".env")
 
-# Mock data stores (these act like tables in a real DB)
-mock_customers: List[Customer] = []
-mock_stores: List[Store] = []
-mock_cards: List[Card] = []
-mock_transactions: List[Transaction] = []
+def get_db():
+    """
+    Function to get a database session.
+    """
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
-# --- database.py ---
+# Load environment variables from .env file
+load_dotenv(".env")
 
-# import os
-# from sqlalchemy import create_engine
-# from sqlalchemy.orm import sessionmaker
-# from dotenv import load_dotenv
+# Get the database URL from environment variables
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# # Load environment variables from .env
-# load_dotenv()
+# Create the SQLAlchemy engine
+engine = sql.create_engine(DATABASE_URL)
 
-# # Read DATABASE_URL from .env file
-# DATABASE_URL = os.getenv("DATABASE_URL")
+# Base class for declarative models
+Base = declarative.declarative_base()
 
-# # Create SQLAlchemy engine
-# engine = create_engine(DATABASE_URL)
-
-# # Create session factory
-# SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# # Dependency to get a session
-# def get_db():
-#     db = SessionLocal()
-#     try:
-#         yield db
-#     finally:
-#         db.close()
+# SessionLocal for database operations
+SessionLocal = orm.sessionmaker(autocommit=False, autoflush=False, bind=engine)

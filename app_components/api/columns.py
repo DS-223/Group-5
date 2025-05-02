@@ -1,44 +1,57 @@
-from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 
-# Customers
-class CustomerDB(Base):
-    __tablename__ = "customers"
-    customer_id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
-    gender = Column(String)
-    birth_date = Column(Date)
-    location = Column(String)
+class DimDate(Base):
+    __tablename__ = "DimDate"
 
-    transactions = relationship("TransactionDB", back_populates="customer")
-    bonus_cards = relationship("CardDB", back_populates="customer")
+    DateKey = Column(Integer, primary_key=True, autoincrement=True)
+    Date = Column(DateTime, nullable=False)
+    Day = Column(Integer, nullable=False)
+    Month = Column(Integer, nullable=False)
+    Year = Column(Integer, nullable=False)
+    Quarter = Column(Integer, nullable=False)
+    DayOfWeek = Column(Integer, nullable=False)
+    DayName = Column(String(20), nullable=False)
+    MonthName = Column(String(20), nullable=False)
 
-# Transactions
-class TransactionDB(Base):
-    __tablename__ = "transactions"
-    transaction_id = Column(Integer, primary_key=True, index=True)
-    customer_id = Column(Integer, ForeignKey("customers.customer_id"))
-    card_id = Column(Integer, ForeignKey("cards.card_id"))
-    store_id = Column(Integer, ForeignKey("stores.store_id"))
-    transaction_date = Column(Date)
-    amount = Column(Float)
+    transactions = relationship("FactTransaction", back_populates="date")
 
-    customer = relationship("CustomerDB", back_populates="transactions")
+class DimCustomer(Base):
+    __tablename__ = "DimCustomer"
+    __table_args__ = {'extend_existing': True}
 
-# Stores
-class StoreDB(Base):
-    __tablename__ = "stores"
-    store_id = Column(Integer, primary_key=True, index=True)
-    store_name = Column(String)
-    location = Column(String)
+    CustomerKey = Column(Integer, primary_key=True, autoincrement=True)
+    CustomerCardCode = Column(String(20), unique=True)
+    Name = Column(String(150))
+    RegistrationDate = Column(DateTime)
+    BirthDate = Column(DateTime)
+    Gender = Column(String(150))
+    Phone = Column(String(150))
+    Address = Column(String(150))
 
-# Bonus Cards
-class CardDB(Base):
-    __tablename__ = "cards"
-    card_id = Column(Integer, primary_key=True, index=True)
-    customer_id = Column(Integer, ForeignKey("customers.customer_id"))
-    card_code = Column(String)
-    registration_date = Column(Date)
+    transactions = relationship("FactTransaction", back_populates="customer")
 
-    customer = relationship("CustomerDB", back_populates="bonus_cards")
+class DimCards(Base):
+    __tablename__ = "DimCards"
+
+    CardKey = Column(Integer, primary_key=True, autoincrement=True)
+    CardCode = Column(String(20))
+    RegistrationDate = Column(DateTime)
+    CardLeftoverAmount = Column(Float, nullable=False)
+
+    transactions = relationship("FactTransaction", back_populates="card")
+
+class FactTransaction(Base):
+    __tablename__ = "FactTransaction"
+
+    TransactionKey = Column(Integer, primary_key=True, autoincrement=True)
+    TransactionDateKey = Column(Integer, ForeignKey("DimDate.DateKey"))
+    CustomerKey = Column(Integer, ForeignKey("DimCustomer.CustomerKey"))
+    CardKey = Column(Integer, ForeignKey("DimCards.CardKey"))
+    Amount = Column(Float, nullable=False)
+    StoreName = Column(String(50), nullable=False)
+
+    date = relationship("DimDate", back_populates="transactions")
+    customer = relationship("DimCustomer", back_populates="transactions")
+    card = relationship("DimCards", back_populates="transactions")

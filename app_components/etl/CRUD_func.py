@@ -1,4 +1,5 @@
 import psycopg2
+from db.create_tables import create_tables
 
 class TransactionDatabase:
     def __init__(self, host, database, user, password):
@@ -17,64 +18,7 @@ class TransactionDatabase:
             password=password
         )
         self.cursor = self.conn.cursor()
-        self.create_tables()
-
-    def create_tables(self):
-        """Create the necessary tables in the PostgreSQL database based on the ERD.
-
-        This method sets up the DimDate, DimCustomer, DimCards, and FactTransactions tables
-        with their respective columns and foreign key constraints.
-        """
-        # DimDate Table
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS DimDate (
-                DateKey INTEGER PRIMARY KEY,
-                Date DATE,
-                Day INTEGER,
-                Month INTEGER,
-                Year INTEGER,
-                DayOfWeek INTEGER,
-                MonthName VARCHAR(20),
-                Quarter INTEGER
-            )
-        ''')
-
-        # DimCustomer Table
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS DimCustomer (
-                CustomerKey INTEGER PRIMARY KEY,
-                Name VARCHAR(100),
-                BirthDate DATE,
-                Gender VARCHAR(10),
-                Phone VARCHAR(20),
-                Address VARCHAR(255)
-            )
-        ''')
-
-        # DimCards Table
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS DimCards (
-                CardKey INTEGER PRIMARY KEY,
-                CardCode VARCHAR(50),
-                RegistrationDate DATE,
-                CardLeftAmount DECIMAL
-            )
-        ''')
-
-        # FactTransactions Table
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS FactTransactions (
-                TransactionDateKey INTEGER,
-                CustomerKey INTEGER,
-                CardKey INTEGER,
-                Amount DECIMAL,
-                FOREIGN KEY (TransactionDateKey) REFERENCES DimDate(DateKey),
-                FOREIGN KEY (CustomerKey) REFERENCES DimCustomer(CustomerKey),
-                FOREIGN KEY (CardKey) REFERENCES DimCards(CardKey)
-            )
-        ''')
-
-        self.conn.commit()
+        create_tables()
 
     def insert_date(self, date_key, date, day, month, year, day_of_week, month_name, quarter):
         """Insert a date record into the DimDate table.
@@ -92,7 +36,7 @@ class TransactionDatabase:
         self.cursor.execute("INSERT INTO DimDate (DateKey, Date, Day, Month, Year, DayOfWeek, MonthName, Quarter) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (DateKey) DO NOTHING",
                            (date_key, date, day, month, year, day_of_week, month_name, quarter))
         self.conn.commit()
-        print(f"Date with DateKey {date_key} inserted successfully.")
+        print(f"Date with DateKey {date_key} inserted into DimDate successfully.")
 
     def insert_customer(self, customer_key, name, birth_date, gender, phone, address):
         """Insert a customer record into the DimCustomer table.
@@ -105,10 +49,26 @@ class TransactionDatabase:
             phone (str): The customer's phone number.
             address (str): The customer's address.
         """
-        self.cursor.execute("INSERT INTO DimCustomer (CustomerKey, Name, BirthDate, Gender, Phone, Address) VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (CustomerKey) DO NOTHING",
-                           (customer_key, name, birth_date, gender, phone, address))
+    
+        self.cursor.execute('INSERT INTO "DimCustomer" ("CustomerKey", "Name", "BirthDate", "Gender", "Phone", "Address")' \
+        ' VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT ("CustomerKey") DO NOTHING',
+                            (customer_key, name, birth_date, gender, phone, address))
         self.conn.commit()
-        print(f"Customer with CustomerKey {customer_key} inserted successfully.")
+        print(f"Customer with CustomerKey {customer_key} inserted into DimCustomer successfully.")
+
+    def peek_table_head(self, table_name, limit=5):
+        """Fetch the first 5 rows from the table provided.
+
+        Returns:
+            list: A list of tuples containing the first 5 rows of the DimCards table.
+        """
+        query = f"SELECT * FROM {table_name} LIMIT {limit};"
+        self.cursor.execute(query)
+        rows = self.cursor.fetchall()
+        for row in rows:
+            print(row)
+        return rows
+
 
     def insert_card(self, card_key, card_code, registration_date, card_left_amount):
         """Insert a card record into the DimCards table.
@@ -122,7 +82,7 @@ class TransactionDatabase:
         self.cursor.execute("INSERT INTO DimCards (CardKey, CardCode, RegistrationDate, CardLeftAmount) VALUES (%s, %s, %s, %s) ON CONFLICT (CardKey) DO NOTHING",
                            (card_key, card_code, registration_date, card_left_amount))
         self.conn.commit()
-        print(f"Card with CardKey {card_key} inserted successfully.")
+        print(f"Card with CardKey {card_key} inserted into DimCards successfully.")
 
     def add_transaction(self, transaction_date_key, customer_key, card_key, amount):
         """Add a new transaction to the FactTransactions table.
@@ -136,7 +96,7 @@ class TransactionDatabase:
         self.cursor.execute("INSERT INTO FactTransactions (TransactionDateKey, CustomerKey, CardKey, Amount) VALUES (%s, %s, %s, %s)",
                            (transaction_date_key, customer_key, card_key, amount))
         self.conn.commit()
-        print("Transaction added successfully.")
+        print("Transaction added to FactTransaction successfully.")
 
     def fetch_transactions(self):
         """Fetch all transactions with details from related tables.

@@ -116,10 +116,42 @@ def transform_qarter():
     return discount_cards
 
 
-def transform_malatia():
-    df = pd.read_sql('SELECT * FROM malatia', engine)
-    return df.head()
+def transform_store(table_name):
+    df = pd.read_sql(f'SELECT * FROM {table_name}', engine)
+
+    df = df.drop(columns=['Discount Card', 'Unnamed: 1', 'Unnamed: 2', 
+                          'Unnamed: 4', 'Phone', 'Date Created', 'Birthday', 'Gender'], errors='ignore')
+
+    df['Name Surname'] = df['Name Surname'].fillna("No Cardholder")  
+    df = df.rename(columns={'Adresss': 'Adress', 'Cardcode': 'Code'})
+
+    # If Code missing, set to 0
+    df['Code'] = df['Code'].apply(lambda x: x if pd.notna(x) else 0)
+    df['Adress'] = df['Adress'].fillna("Unknown")
+
+    # --- DATA TYPES ---
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce', dayfirst=True)
+    df['Name Surname'] = df['Name Surname'].astype(str)
+    df['Code'] = df['Code'].astype(str)  # must be string for matching
+    df['Adress'] = df['Adress'].astype(str)
+    df['Money Spent'] = df['Money Spent'].astype(float)
+
+    # --- CUSTOMERKEY MAPPING ---
+
+    # Get the dimension table only once per call
+    dim_customer = transform_qarter()
+    cardcode_to_key = dict(zip(dim_customer['CustomerCardCode'], dim_customer['ID']))
+
+    def assign_customer_key(code):
+        if code == '0' or pd.isna(code):
+            return 0
+        return cardcode_to_key.get(code, 0)
+
+    df['CustomerKey'] = df['Code'].apply(assign_customer_key)
+
+    return df
 
 if __name__ == "__main__":
     transform_qarter()
-    # print(transform_malatia())
+    malatia_df = transform_store('shengavit')
+    print(malatia_df.head())

@@ -32,7 +32,7 @@ class TransactionDatabase:
             ON CONFLICT ("CustomerKey") DO NOTHING
         """, (customer_key, card_code, name, RegistrationDate, birth_date, gender, phone, address))
         self.conn.commit()
-        print(f"Customer with CustomerKey {customer_key} inserted into DimCustomer successfully.")
+        # print(f"Customer with CustomerKey {customer_key} inserted into DimCustomer successfully.")
 
     def peek_table_head(self, table_name, limit=5):
         """Fetch the first 5 rows from the table provided."""

@@ -42,7 +42,6 @@ class FactTransaction(Base):
     TransactionKey = Column(Integer, primary_key=True, autoincrement=True)
     TransactionDateKey = Column(Integer, ForeignKey("DimDate.DateKey"))
     CustomerKey = Column(Integer, ForeignKey("DimCustomer.CustomerKey"))
-    CardKey = Column(Integer, ForeignKey("DimCards.CardKey"))
     Amount = Column(Float, nullable=False)
     StoreName = Column(String(50), nullable=False)
 

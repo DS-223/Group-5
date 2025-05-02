@@ -36,18 +36,6 @@ class DimCustomer(Base):
         return f"<DimCustomer(CustomerKey={self.CustomerKey}, Name={self.Name})>"
 
 
-class DimCards(Base):
-    __tablename__ = "DimCards"
-
-    CardKey = Column(Integer, primary_key=True, autoincrement=True)
-    CardCode = Column(String(20))
-    RegistrationDate = Column(DateTime)
-    CardLeftoverAmount = Column(Float, nullable=False)
-
-    def __repr__(self):
-        return f"<DimCards(CardKey={self.CardKey}, CardCode={self.CardCode})>"
-
-
 class FactTransaction(Base):
     __tablename__ = "FactTransaction"
 

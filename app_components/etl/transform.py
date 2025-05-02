@@ -30,7 +30,7 @@ def transform_qarter():
         None
     """
 
-    discount_cards = pd.read_sql("SELECT * FROM qarter", engine)
+    discount_cards = pd.read_sql('SELECT * FROM qarter', engine)
     # discount_cards = discount_cards.loc[:, ~discount_cards.columns.str.contains('^Unnamed')]
     discount_cards = discount_cards.rename(columns={
     "Дисконтная карта": "DiscountCard",
@@ -55,16 +55,18 @@ def transform_qarter():
     # Getting rid of invalid names
     df_no_name = discount_cards[discount_cards['Name'].fillna('').str.len() < 5]
     discount_cards = discount_cards[~discount_cards.index.isin(df_no_name.index)]
+    discount_cards['Name'] = discount_cards['Name'].str.slice(0, 50)
 
     # Getting rid of invalid card codes
     df_invalid_cardcode = discount_cards[discount_cards['CardCode'].astype(str).str.len() != 13]
     discount_cards = discount_cards[~discount_cards.index.isin(df_invalid_cardcode.index)]
 
+
     # Standardizing phone numbers
     discount_cards['PhoneNumber'] = discount_cards['PhoneNumber'].apply(
         lambda x: ''.join(filter(str.isdigit, x)) if pd.notnull(x) else x
     )
-    mask_phone_in_address = discount_cards['CustomerAddress'].str.match(r'^[\d+]', na=False)
+    mask_phone_in_address = discount_cards['CustomerAddress'].str.match(r'^(\+?\d{5,})', na=False)
 
     # Move Address to PhoneNumber and replace address with 'Unknown'
     discount_cards.loc[mask_phone_in_address, 'PhoneNumber'] = discount_cards.loc[mask_phone_in_address, 'CustomerAddress']
@@ -92,9 +94,18 @@ def transform_qarter():
 
     # Adding an ID column starting from 1
     discount_cards = discount_cards.reset_index(drop=True)
-
-    print(discount_cards.head(10))
     print(f"Done! Cleaned {len(discount_cards)} rows.")
+    
+    discount_cards['ID'] = discount_cards.index + 1
+    
+    # Truncating string columns to a maximum length of 255 characters
+    discount_cards['PhoneNumber'] = discount_cards['PhoneNumber'].str.slice(0, 255)
+    discount_cards['CustomerAddress'] = discount_cards['CustomerAddress'].str.slice(0, 255)
 
+    # Ensuring PhoneNumber is a string and has a maximum length of 50 characters, else just drop it altogether
+    discount_cards['PhoneNumber'] = discount_cards['PhoneNumber'].apply(
+    lambda x: x if pd.notnull(x) and len(str(x)) <= 50 else 'Unknown')
+
+    return discount_cards
 if __name__ == "__main__":
     transform_qarter()

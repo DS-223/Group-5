@@ -72,6 +72,8 @@ services:
       - ./front:/front
     ports:
       - 8501:8501
+    env_file:
+      - .env
     environment:
       - API_URL=http://back:8000
     depends_on:

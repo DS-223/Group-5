@@ -86,3 +86,34 @@ def load_dimcustomer_table(discount_cards: pd.DataFrame):
     db.cursor.execute('SELECT COUNT(*) FROM "DimCustomer";')
     row_count = db.cursor.fetchone()[0]
     print(f"Finished loading DimCustomer table. Length: {row_count}")
+
+
+def load_dimdate_table(dim_date_df: pd.DataFrame):
+    # Prepare list of tuples for insertion
+    records = []
+    for _, row in dim_date_df.iterrows():
+        records.append((
+            int(row['DateKey']),
+            row['Date'],
+            int(row['Day']),
+            int(row['Month']),
+            int(row['Year']),
+            int(row['Quarter']),
+            int(row['DayOfWeek']),
+            row['DayName'],
+            row['MonthName']
+        ))
+
+    # Prepare the insert query with ON CONFLICT DO NOTHING
+    insert_query = """
+        INSERT INTO "DimDate" 
+        ("DateKey", "Date", "Day", "Month", "Year", "Quarter", "DayOfWeek", "DayName", "MonthName")
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ON CONFLICT ("DateKey") DO NOTHING
+    """
+
+    # Execute all at once
+    db.cursor.executemany(insert_query, records)
+    db.conn.commit()
+
+    print(f"Finished loading DimDate table. Rows attempted: {len(records)}")

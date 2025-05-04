@@ -1,5 +1,6 @@
 from db.db_conf import engine
 import pandas as pd
+from loguru import logger
 
 def transform_qarter():
     """
@@ -26,7 +27,7 @@ def transform_qarter():
         None
     """
 
-    print("Starting transformation of qarter...")
+    logger.info("Starting transformation of qarter...")
 
     discount_cards = pd.read_sql('SELECT * FROM qarter', engine)
     # discount_cards = discount_cards.loc[:, ~discount_cards.columns.str.contains('^Unnamed')]
@@ -110,7 +111,7 @@ def transform_qarter():
     discount_cards['PhoneNumber'] = discount_cards['PhoneNumber'].apply(
     lambda x: x if pd.notnull(x) and len(str(x)) <= 50 else 'Unknown')
     
-    print(f"Done! Cleaned {len(discount_cards)} rows.")
+    logger.info(f"Done! Cleaned {len(discount_cards)} rows.")
     return discount_cards
 
 
@@ -144,10 +145,29 @@ def transform_store(table_name, cardcode_to_key):
 
     return df
 
+def transform_dimdate(transformed_data):
+    all_dates = pd.concat([df['Date'] for df in transformed_data.values()])
+    unique_dates = pd.to_datetime(all_dates.dropna().unique())
+
+    dim_date = pd.DataFrame({'Date': unique_dates})
+    dim_date['DateKey'] = dim_date['Date'].dt.strftime('%Y%m%d').astype(int)
+    dim_date['Day'] = dim_date['Date'].dt.day
+    dim_date['Month'] = dim_date['Date'].dt.month
+    dim_date['Year'] = dim_date['Date'].dt.year
+    dim_date['Quarter'] = dim_date['Date'].dt.quarter
+    dim_date['DayOfWeek'] = dim_date['Date'].dt.dayofweek + 1  # Monday=1
+    dim_date['DayName'] = dim_date['Date'].dt.day_name()
+    dim_date['MonthName'] = dim_date['Date'].dt.month_name()
+
+    dim_date = dim_date.sort_values('Date')
+    dim_date = dim_date.drop_duplicates(subset=['DateKey'])
+
+    return dim_date
+
 if __name__ == "__main__":
     raw_tables = ['1masiv', '5rd_masiv', '7rd_masiv', 
     'agoracenter', 'malatia', 'qanaqer', 
-    'raykom', 'shengavit', 'qarter']
+    'raykom', 'shengavit']
 
     transformed_data = {}
 
@@ -155,7 +175,7 @@ if __name__ == "__main__":
     cardcode_to_key = dict(zip(discount_cards['CustomerCardCode'], discount_cards['ID']))
 
     for table in raw_tables:
-        print(f"Transforming table: {table}")
+        logger.info(f"Transforming table: {table}")
         df = transform_store(table, cardcode_to_key)
         transformed_data[table] = df
-        print(f"Finished transforming {table}. Rows: {len(df)}\n")
+        logger.info(f"Finished transforming {table}. Rows: {len(df)}\n")

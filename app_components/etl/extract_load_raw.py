@@ -66,8 +66,13 @@ def load_store_dim_table():
         'SQM': 'SQM'
     })
 
-    df.to_sql('DimStore', con=engine, index=False, if_exists="append")
-    logger.info(f"Loaded DimStore table with {len(df)} rows.")
+    from sqlalchemy import inspect
+    inspector = inspect(engine)
+    if inspector.has_table('DimStore'):
+        logger.warning("DimStore already exists. Skipping reload.")
+    else:
+        df.to_sql('DimStore', con=engine, index=False, if_exists="append")
+        logger.info(f"Loaded DimStore table with {len(df)} rows.")
 
 
 def run():

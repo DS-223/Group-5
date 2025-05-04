@@ -42,6 +42,7 @@ import os
 import pandas as pd
 import time
 import psycopg2
+from loguru import logger
 
 load_dotenv()
 
@@ -54,10 +55,10 @@ for attempt in range(5):
             password=os.getenv("DB_PASSWORD")
         )
         conn.close()
-        print("Database connection successful.")
+        logger.info("Database connection successful.")
         break
     except psycopg2.OperationalError as e:
-        print(f"Attempt {attempt + 1}: Database connection failed. Retrying in 3 seconds...")
+        logger.warning(f"Attempt {attempt + 1}: Database connection failed. Retrying in 3 seconds...")
         time.sleep(3)
 else:
     raise Exception("Failed to connect to the database after 5 attempts.")
@@ -85,7 +86,7 @@ def load_dimcustomer_table(discount_cards: pd.DataFrame):
         )
     db.cursor.execute('SELECT COUNT(*) FROM "DimCustomer";')
     row_count = db.cursor.fetchone()[0]
-    print(f"Finished loading DimCustomer table. Length: {row_count}")
+    logger.info(f"Finished loading DimCustomer table. Length: {row_count}")
 
 
 def load_dimdate_table(dim_date_df: pd.DataFrame):
@@ -116,4 +117,4 @@ def load_dimdate_table(dim_date_df: pd.DataFrame):
     db.cursor.executemany(insert_query, records)
     db.conn.commit()
 
-    print(f"Finished loading DimDate table. Rows attempted: {len(records)}")
+    logger.info(f"Finished loading DimDate table. Rows attempted: {len(records)}")

@@ -21,7 +21,7 @@ class TransactionDatabase:
             ON CONFLICT ("DateKey") DO NOTHING
         """, (date_key, date, day, month, year, day_of_week, month_name, day_name, quarter))
         self.conn.commit()
-        print(f"Date with DateKey {date_key} inserted into DimDate successfully.")
+        # print(f"Date with DateKey {date_key} inserted into DimDate successfully.")
 
     def insert_customer(self, customer_key, card_code, name, RegistrationDate, birth_date, gender, phone, address):
         """Insert a customer record into the DimCustomer table."""

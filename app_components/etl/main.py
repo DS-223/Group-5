@@ -2,6 +2,7 @@ from db.create_tables import create_tables
 from extract_load_raw import run as run_etl
 from transform import transform_qarter, transform_store, transform_dimdate
 from load import load_dimcustomer_table, load_dimdate_table
+from loguru import logger
 
 if __name__ == "__main__":
     create_tables()
@@ -27,13 +28,13 @@ if __name__ == "__main__":
 
     # --- Transform all stores ---
     for table in raw_tables:
-        print(f"Transforming table: {table}")
+        logger.info(f"Transforming table: {table}")
         df = transform_store(table, cardcode_to_key)
         transformed_data[table] = df
-        print(f"Finished transforming {table}. Rows: {len(df)}\n")
+        logger.info(f"Finished transforming {table}. Rows: {len(df)}\n")
         print(df.head())
 
-    print("All store tables transformed successfully.")
+    logger.info("All store tables transformed successfully.")
 
     # --- DimDate ---
     dim_date_df = transform_dimdate(transformed_data)

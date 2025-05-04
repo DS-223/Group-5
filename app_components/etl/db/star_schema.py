@@ -36,14 +36,29 @@ class DimCustomer(Base):
         return f"<DimCustomer(CustomerKey={self.CustomerKey}, Name={self.Name})>"
 
 
+    
+class DimStore(Base):
+    __tablename__ = "DimStore"
+
+    StoreID = Column(Integer, primary_key=True, autoincrement=True)
+    Name = Column(String(50), nullable=False)
+    Address = Column(String(150), nullable=False)
+    OpenYear = Column(Integer, nullable=False)
+    District = Column(String(50), nullable=False)
+    SQM = Column(Integer, nullable=False)
+
+    def __repr__(self):
+        return f"<DimStore(StoreID={self.StoreID}, StoreName={self.Name})>"
+
+
 class FactTransaction(Base):
     __tablename__ = "FactTransaction"
 
     TransactionKey = Column(Integer, primary_key=True, autoincrement=True)
     TransactionDateKey = Column(Integer, ForeignKey("DimDate.DateKey"))
     CustomerKey = Column(Integer, ForeignKey("DimCustomer.CustomerKey"))
+    StoreKey = Column(Integer, ForeignKey("DimStore.StoreID"), nullable=False)
     Amount = Column(Float, nullable=False)
-    StoreName = Column(String(50), nullable=False)
 
     def __repr__(self):
         return f"<FactTransaction(TransactionKey={self.TransactionKey}, Amount={self.Amount})>"

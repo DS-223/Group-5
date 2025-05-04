@@ -69,12 +69,16 @@ def load_store_dim_table():
     from sqlalchemy import inspect
     inspector = inspect(engine)
     if inspector.has_table('DimStore'):
-        logger.warning("DimStore already exists. Skipping reload.")
+        row_count = pd.read_sql('SELECT COUNT(*) FROM "DimStore";', engine).iloc[0, 0]
+        if row_count > 0:
+            logger.warning("DimStore already exists and has data. Skipping reload.")
+        else:
+            df.to_sql('DimStore', con=engine, index=False, if_exists="append")
+            logger.info(f"DimStore existed but was empty. Loaded {len(df)} rows.")
     else:
-        df.to_sql('DimStore', con=engine, index=False, if_exists="append")
-        logger.info(f"Loaded DimStore table with {len(df)} rows.")
-
-
+        df.to_sql('DimStore', con=engine, index=False, if_exists="replace")
+        logger.info(f"DimStore did not exist. Loaded {len(df)} rows.")
+        
 def run():
     folder_path = "data/*.xlsx"
     files = glob.glob(folder_path)

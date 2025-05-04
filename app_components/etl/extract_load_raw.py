@@ -53,12 +53,33 @@ def load_xlsx_to_table(table_name: str, xlsx_path: str) -> bool:
         logger.error(f"Failed to load table {table_name}. Error: {e}")
         return False
 
+def load_store_dim_table():
+    store_file = "data/Stores.xlsx"
+    df = pd.read_excel(store_file)
+
+    df = df.rename(columns={
+        'StoreID': 'StoreID',
+        'Name': 'Name',
+        'Address': 'Address',
+        'OpenDate': 'OpenYear',
+        'District': 'District',
+        'SQM': 'SQM'
+    })
+
+    df.to_sql('DimStore', con=engine, index=False, if_exists="append")
+    logger.info(f"Loaded DimStore table with {len(df)} rows.")
+
+
 def run():
     folder_path = "data/*.xlsx"
     files = glob.glob(folder_path)
     logger.info(f"Found {len(files)} XLSX files.")
 
     success_count = 0
+    logger.info(f"Loading Dimstore from Stores.xlsx")
+    load_store_dim_table()
+    success_count += 1
+
     for file_path in files:
         table_raw = path.splitext(path.basename(file_path))[0]
         table_name = clean_table_name(table_raw)
@@ -67,8 +88,12 @@ def run():
             logger.warning(f"Skipping invalid XLSX file: {file_path} (missing sharedStrings.xml)")
             continue
 
+        elif table_name == "stores":
+            continue
+
         logger.info(f"Loading table: {table_name}")
         if load_xlsx_to_table(table_name, file_path):
             success_count += 1
+
 
     logger.info(f"All done. {success_count}/{len(files)} tables loaded successfully.")

@@ -42,46 +42,57 @@ class TransactionDatabase:
         for row in rows:
             print(row)
         return rows
+    
+    def insert_store(self, store_id, name, address, open_year, district, sqm):
+        """Insert a store record into the DimStore table."""
+        self.cursor.execute("""
+            INSERT INTO DimStore (StoreID, Name, Address, OpenYear, District, SQM)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            ON CONFLICT (StoreID) DO NOTHING
+        """, (store_id, name, address, open_year, district, sqm))
+        self.conn.commit()
+        print(f"Store with StoreID {store_id} inserted into DimStore successfully.")
 
-    def add_transaction(self, transaction_date_key, customer_key, amount):
+    def add_transaction(self, transaction_key, transaction_date_key, customer_key, store_key, amount):
         """Add a new transaction to the FactTransactions table."""
         self.cursor.execute("""
-            INSERT INTO FactTransactions (TransactionDateKey, CustomerKey, Amount)
-            VALUES (%s, %s, %s)
-        """, (transaction_date_key, customer_key, amount))
+            INSERT INTO FactTransactions (TransactionKey, TransactionDateKey, CustomerKey, StoreKey, Amount)
+            VALUES (%s, %s, %s, %s, %s)
+            ON CONFLICT (TransactionKey) DO NOTHING
+        """, (transaction_key, transaction_date_key, customer_key, store_key, amount))
         self.conn.commit()
         print("Transaction added to FactTransaction successfully.")
 
     def fetch_transactions(self):
         """Fetch all transactions with details from related tables."""
         self.cursor.execute("""
-            SELECT ft.TransactionDateKey, ft.CustomerKey, ft.Amount, 
-                   dd.Date, dc.Name
+            SELECT ft.TransactionKey, ft.TransactionDateKey, ft.CustomerKey, ft.Amount, 
+                dd.Date, dc.Name
             FROM FactTransactions ft
             JOIN DimDate dd ON ft.TransactionDateKey = dd.DateKey
             JOIN DimCustomer dc ON ft.CustomerKey = dc.CustomerKey
         """)
         transactions = self.cursor.fetchall()
         for transaction in transactions:
-            print(f"Transaction on {transaction[3]} by {transaction[4]}: ${transaction[2]}")
+            print(f"Transaction {transaction[0]} on {transaction[4]} by {transaction[5]}: ${transaction[3]}")
         return transactions
 
-    def update_transaction_amount(self, transaction_date_key, customer_key, new_amount):
+    def update_transaction_amount(self, transaction_key, new_amount):
         """Update the amount of an existing transaction."""
         self.cursor.execute("""
             UPDATE FactTransactions 
             SET Amount = %s 
-            WHERE TransactionDateKey = %s AND CustomerKey = %s
-        """, (new_amount, transaction_date_key, customer_key))
+            WHERE TransactionKey = %s
+        """, (new_amount, transaction_key))
         self.conn.commit()
         print("Transaction amount updated successfully.")
 
-    def delete_transaction(self, transaction_date_key, customer_key):
+    def delete_transaction(self, transaction_key):
         """Delete a transaction."""
         self.cursor.execute("""
             DELETE FROM FactTransactions 
-            WHERE TransactionDateKey = %s AND CustomerKey = %s
-        """, (transaction_date_key, customer_key))
+            WHERE TransactionKey = %s
+        """, (transaction_key,))
         self.conn.commit()
         print("Transaction deleted successfully.")
 

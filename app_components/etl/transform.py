@@ -1,10 +1,6 @@
 from db.db_conf import engine
 import pandas as pd
 
-
-
-print("Starting transformation of qarter...")
-
 def transform_qarter():
     """
     Cleans and transforms data from the "qarter" table into a standardized format.
@@ -29,6 +25,8 @@ def transform_qarter():
     Returns:
         None
     """
+
+    print("Starting transformation of qarter...")
 
     discount_cards = pd.read_sql('SELECT * FROM qarter', engine)
     # discount_cards = discount_cards.loc[:, ~discount_cards.columns.str.contains('^Unnamed')]
@@ -116,8 +114,8 @@ def transform_qarter():
     return discount_cards
 
 
-def transform_store(table_name):
-    df = pd.read_sql(f'SELECT * FROM {table_name}', engine)
+def transform_store(table_name, cardcode_to_key):
+    df = pd.read_sql(f'SELECT * FROM "{table_name}"', engine)
 
     df = df.drop(columns=['Discount Card', 'Unnamed: 1', 'Unnamed: 2', 
                           'Unnamed: 4', 'Phone', 'Date Created', 'Birthday', 'Gender'], errors='ignore')
@@ -137,11 +135,6 @@ def transform_store(table_name):
     df['Money Spent'] = df['Money Spent'].astype(float)
 
     # --- CUSTOMERKEY MAPPING ---
-
-    # Get the dimension table only once per call
-    dim_customer = transform_qarter()
-    cardcode_to_key = dict(zip(dim_customer['CustomerCardCode'], dim_customer['ID']))
-
     def assign_customer_key(code):
         if code == '0' or pd.isna(code):
             return 0
@@ -152,6 +145,17 @@ def transform_store(table_name):
     return df
 
 if __name__ == "__main__":
-    transform_qarter()
-    malatia_df = transform_store('shengavit')
-    print(malatia_df.head())
+    raw_tables = ['1masiv', '5rd_masiv', '7rd_masiv', 
+    'agoracenter', 'malatia', 'qanaqer', 
+    'raykom', 'shengavit', 'qarter']
+
+    transformed_data = {}
+
+    discount_cards = transform_qarter()
+    cardcode_to_key = dict(zip(discount_cards['CustomerCardCode'], discount_cards['ID']))
+
+    for table in raw_tables:
+        print(f"Transforming table: {table}")
+        df = transform_store(table, cardcode_to_key)
+        transformed_data[table] = df
+        print(f"Finished transforming {table}. Rows: {len(df)}\n")

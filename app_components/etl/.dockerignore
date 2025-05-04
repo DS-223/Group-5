@@ -1,0 +1,32 @@
+# Ignore Python cache & compiled files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore large data files
+data/
+*.csv
+*.xlsx
+*.xls
+*.parquet
+*.sav
+
+# Ignore virtual environments
+.venv/
+env/
+venv/
+
+# Ignore logs and temp files
+*.log
+*.tmp
+
+# MacOS metadata
+.DS_Store
+
+# Ignore VS Code
+.vscode/
+

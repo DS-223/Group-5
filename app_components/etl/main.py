@@ -1,6 +1,6 @@
 from db.create_tables import create_tables
 from extract_load_raw import run as run_etl
-from transform import transform_qarter
+from transform import transform_qarter, transform_store
 from load import load_dimcustomer_table
 """
 This script orchestrates the ETL (Extract, Transform, Load) process for the project.
@@ -37,6 +37,29 @@ Output:
 if __name__ == "__main__":
     create_tables()
     run_etl()
-    discount_cards = transform_qarter() 
+    discount_cards = transform_qarter()
     load_dimcustomer_table(discount_cards)
-    print("Process completed successfully.")
+    cardcode_to_key = dict(zip(discount_cards['CustomerCardCode'], discount_cards['ID']))
+
+    raw_tables = [
+        '1masiv', 
+        '5rd_masiv', 
+        '7rd_masiv', 
+        'agoracenter', 
+        'malatia', 
+        'qanaqer', 
+        'raykom', 
+        'shengavit'
+    ]
+
+    transformed_data = {}
+
+    for table in raw_tables:
+        print(f"Transforming table: {table}")
+        df = transform_store(table, cardcode_to_key) 
+        transformed_data[table] = df
+        print(f"Finished transforming {table}. Rows: {len(df)}\n")
+        print(df.head())
+
+    print("All store tables transformed successfully.")
+

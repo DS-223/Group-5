@@ -13,13 +13,13 @@ class TransactionDatabase:
         self.cursor = self.conn.cursor()
         create_tables()
 
-    def insert_date(self, date_key, date, day, month, year, day_of_week, month_name, quarter):
+    def insert_date(self, date_key, date, day, month, year, day_of_week, month_name, day_name, quarter):
         """Insert a date record into the DimDate table."""
         self.cursor.execute("""
-            INSERT INTO DimDate (DateKey, Date, Day, Month, Year, DayOfWeek, MonthName, Quarter)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            ON CONFLICT (DateKey) DO NOTHING
-        """, (date_key, date, day, month, year, day_of_week, month_name, quarter))
+            INSERT INTO "DimDate" ("DateKey", "Date", "Day", "Month", "Year", "DayOfWeek", "MonthName", "DayName", "Quarter")
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT ("DateKey") DO NOTHING
+        """, (date_key, date, day, month, year, day_of_week, month_name, day_name, quarter))
         self.conn.commit()
         print(f"Date with DateKey {date_key} inserted into DimDate successfully.")
 
@@ -43,16 +43,6 @@ class TransactionDatabase:
             print(row)
         return rows
     
-    def insert_store(self, store_id, name, address, open_year, district, sqm):
-        """Insert a store record into the DimStore table."""
-        self.cursor.execute("""
-            INSERT INTO DimStore (StoreID, Name, Address, OpenYear, District, SQM)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT (StoreID) DO NOTHING
-        """, (store_id, name, address, open_year, district, sqm))
-        self.conn.commit()
-        print(f"Store with StoreID {store_id} inserted into DimStore successfully.")
-
     def add_transaction(self, transaction_key, transaction_date_key, customer_key, store_key, amount):
         """Add a new transaction to the FactTransactions table."""
         self.cursor.execute("""

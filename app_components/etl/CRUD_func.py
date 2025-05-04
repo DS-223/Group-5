@@ -46,12 +46,12 @@ class TransactionDatabase:
     def add_transaction(self, transaction_key, transaction_date_key, customer_key, store_key, amount):
         """Add a new transaction to the FactTransactions table."""
         self.cursor.execute("""
-            INSERT INTO FactTransactions (TransactionKey, TransactionDateKey, CustomerKey, StoreKey, Amount)
+            INSERT INTO "FactTransaction" ("TransactionKey", "TransactionDateKey", "CustomerKey", "StoreKey", "Amount")
             VALUES (%s, %s, %s, %s, %s)
-            ON CONFLICT (TransactionKey) DO NOTHING
+            ON CONFLICT ("TransactionKey") DO NOTHING
         """, (transaction_key, transaction_date_key, customer_key, store_key, amount))
         self.conn.commit()
-        print("Transaction added to FactTransaction successfully.")
+        # print("Transaction added to FactTransaction successfully.")
 
     def fetch_transactions(self):
         """Fetch all transactions with details from related tables."""

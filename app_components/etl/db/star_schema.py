@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 class DimDate(Base):
     __tablename__ = "DimDate"
 
-    DateKey = Column(Integer, primary_key=True, autoincrement=True)
+    DateKey = Column(Integer, primary_key=True)
     Date = Column(DateTime, nullable=False)
     Day = Column(Integer, nullable=False)
     Month = Column(Integer, nullable=False)

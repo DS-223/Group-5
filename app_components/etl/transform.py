@@ -114,36 +114,72 @@ def transform_qarter():
     logger.info(f"Done! Cleaned {len(discount_cards)} rows.")
     return discount_cards
 
+STORE_NAME_MAPPING = {
+    'Մասիվ': 'Մասիվ 1',
+    'Ագորա_խանութ': 'Մասիվ 5',
+    '7Մասիվ': 'Մասիվ 7',
+    'Ագորա ցենտր': 'Բանգլադեշ',
+    'Մալաթիա': 'Մալաթիա',
+    'Քանաքեռ': 'Քանաքեռ',
+    'Ռայկոմ': 'Ռայկոմ',
+    'Շենգավիթ': 'Շենգավիթ'
+}
+
+def assign_customer_key(code, cardcode_to_key):
+    if code == '0' or pd.isna(code):
+        return 0
+    return cardcode_to_key.get(code, 0)
+
+def assign_store_id(store_name, store_name_to_id):
+    return store_name_to_id.get(store_name, None)
 
 def transform_store(table_name, cardcode_to_key):
     df = pd.read_sql(f'SELECT * FROM "{table_name}"', engine)
 
+    # Drop unnecessary columns (ignore if they don't exist)
     df = df.drop(columns=['Discount Card', 'Unnamed: 1', 'Unnamed: 2', 
                           'Unnamed: 4', 'Phone', 'Date Created', 'Birthday', 'Gender'], errors='ignore')
 
     df['Name Surname'] = df['Name Surname'].fillna("No Cardholder")  
     df = df.rename(columns={'Adresss': 'Adress', 'Cardcode': 'Code'})
 
-    # If Code missing, set to 0
-    df['Code'] = df['Code'].apply(lambda x: x if pd.notna(x) else 0)
-    df['Adress'] = df['Adress'].fillna("Unknown")
+    # Fill missing codes with 0 and ensure string type
+    df['Code'] = df['Code'].fillna(0).astype(str).str.strip()
 
-    # --- DATA TYPES ---
+    # Fill missing Store with empty string and strip whitespace
+    df['Store'] = df['Store'].fillna('').astype(str).str.strip()
+
+    # Replace using the STORE_NAME_MAPPING
+    df['Store'] = df['Store'].replace(STORE_NAME_MAPPING)
+
+    # Address cleanup
+    df['Adress'] = df['Adress'].fillna("Unknown").astype(str)
+
+    # Convert types
     df['Date'] = pd.to_datetime(df['Date'], errors='coerce', dayfirst=True)
     df['Name Surname'] = df['Name Surname'].astype(str)
-    df['Code'] = df['Code'].astype(str)  # must be string for matching
-    df['Adress'] = df['Adress'].astype(str)
     df['Money Spent'] = df['Money Spent'].astype(float)
 
     # --- CUSTOMERKEY MAPPING ---
-    def assign_customer_key(code):
-        if code == '0' or pd.isna(code):
-            return 0
-        return cardcode_to_key.get(code, 0)
+    df['CustomerKey'] = df['Code'].apply(lambda code: assign_customer_key(code, cardcode_to_key))
 
-    df['CustomerKey'] = df['Code'].apply(assign_customer_key)
+    # --- STOREKEY MAPPING ---
+    # Get DimStore names and IDs
+    store_df = pd.read_sql('SELECT * FROM "DimStore";', engine)
+    store_name_to_id = dict(zip(store_df['Name'].str.strip(), store_df['StoreID']))
+
+    # Map store names to StoreIDs
+    df['StoreID'] = df['Store'].apply(lambda name: assign_store_id(name, store_name_to_id))
+
+    # Report missing store mappings
+    if df['StoreID'].isnull().any():
+        missing = df[df['StoreID'].isnull()]['Store'].unique()
+        logger.warning(f"These store names could not be mapped to StoreID: {missing}")
+
+    df = df.drop(columns=['Store'])
 
     return df
+
 
 def transform_dimdate(transformed_data):
     all_dates = pd.concat([df['Date'] for df in transformed_data.values()])

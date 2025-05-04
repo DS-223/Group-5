@@ -118,3 +118,52 @@ def load_dimdate_table(dim_date_df: pd.DataFrame):
     db.conn.commit()
 
     logger.info(f"Finished loading DimDate table. Rows attempted: {len(records)}")
+
+def load_facttransaction_table(transformed_data, dim_date_df):
+    store_df = pd.read_sql('SELECT * FROM "DimStore";', db.conn)
+
+    date_to_datekey = dict(zip(dim_date_df['Date'].dt.date, dim_date_df['DateKey']))
+    store_name_to_id = dict(zip(store_df['Name'].str.strip(), store_df['StoreID']))
+    
+    transaction_id = 1
+
+    for table_name, df in transformed_data.items():
+        logger.info(f"Loading transactions for {table_name}...")
+
+        for idx, row in df.iterrows():
+            transaction_key = transaction_id
+
+            # --- DATE ---
+            try:
+                date_key = date_to_datekey.get(row['Date'].date())
+            except Exception:
+                continue  # Skip invalid dates
+
+            if pd.isna(date_key):
+                continue
+
+            # --- CUSTOMER ---
+            customer_key = int(row['CustomerKey'])
+            if customer_key == 0:
+                continue  # Skip unknown customers
+
+            # --- STORE ---
+            store_key = row['StoreID']
+            if pd.isna(store_key):
+                continue  # Skip if store not mapped
+
+            amount = float(row['Money Spent'])
+
+            db.add_transaction(
+                transaction_key=transaction_key,
+                transaction_date_key=int(date_key),
+                customer_key=customer_key,
+                store_key=int(store_key),
+                amount=amount
+            )
+
+            transaction_id += 1
+
+    db.cursor.execute('SELECT COUNT(*) FROM "FactTransaction";')
+    row_count = db.cursor.fetchone()[0]
+    logger.info(f"Finished loading FactTransaction table. Length: {row_count}")

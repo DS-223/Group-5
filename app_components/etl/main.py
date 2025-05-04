@@ -1,7 +1,7 @@
 from db.create_tables import create_tables
 from extract_load_raw import run as run_etl
 from transform import transform_qarter, transform_store, transform_dimdate
-from load import load_dimcustomer_table, load_dimdate_table
+from load import load_dimcustomer_table, load_dimdate_table, load_facttransaction_table
 from loguru import logger
 
 if __name__ == "__main__":
@@ -40,3 +40,6 @@ if __name__ == "__main__":
     dim_date_df = transform_dimdate(transformed_data)
     print(dim_date_df.head())
     load_dimdate_table(dim_date_df) 
+
+    # --- FactTransaction ---
+    load_facttransaction_table(transformed_data, dim_date_df)

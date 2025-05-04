@@ -4,4 +4,4 @@ from db.star_schema import DimDate, DimCustomer, FactTransaction
 
 def create_tables():
     Base.metadata.create_all(bind=engine)
-    logger.info("All tables are created successfully.")
+    logger.info("All raw and empty tables are created successfully.")

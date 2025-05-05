@@ -17,6 +17,7 @@ class DimDate(Base):
 
     transactions = relationship("FactTransaction", back_populates="date")
 
+
 class DimCustomer(Base):
     __tablename__ = "DimCustomer"
     __table_args__ = {'extend_existing': True}
@@ -32,15 +33,19 @@ class DimCustomer(Base):
 
     transactions = relationship("FactTransaction", back_populates="customer")
 
-class DimCards(Base):
-    __tablename__ = "DimCards"
 
-    CardKey = Column(Integer, primary_key=True, autoincrement=True)
-    CardCode = Column(String(20))
-    RegistrationDate = Column(DateTime)
-    CardLeftoverAmount = Column(Float, nullable=False)
+class DimStore(Base):
+    __tablename__ = "DimStore"
 
-    transactions = relationship("FactTransaction", back_populates="card")
+    StoreID = Column(Integer, primary_key=True, autoincrement=True)
+    Name = Column(String(50), nullable=False)
+    Address = Column(String(150), nullable=False)
+    OpenYear = Column(Integer, nullable=False)
+    District = Column(String(50), nullable=False)
+    SQM = Column(Integer, nullable=False)
+
+    transactions = relationship("FactTransaction", back_populates="store")
+
 
 class FactTransaction(Base):
     __tablename__ = "FactTransaction"
@@ -48,10 +53,9 @@ class FactTransaction(Base):
     TransactionKey = Column(Integer, primary_key=True, autoincrement=True)
     TransactionDateKey = Column(Integer, ForeignKey("DimDate.DateKey"))
     CustomerKey = Column(Integer, ForeignKey("DimCustomer.CustomerKey"))
-    CardKey = Column(Integer, ForeignKey("DimCards.CardKey"))
+    StoreKey = Column(Integer, ForeignKey("DimStore.StoreID"))
     Amount = Column(Float, nullable=False)
-    StoreName = Column(String(50), nullable=False)
 
     date = relationship("DimDate", back_populates="transactions")
     customer = relationship("DimCustomer", back_populates="transactions")
-    card = relationship("DimCards", back_populates="transactions")
+    store = relationship("DimStore", back_populates="transactions")

@@ -1,7 +1,4 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.express as px
 
 st.set_page_config(page_title="Transaction Analysis", layout="wide")
 st.title("Transaction Analysis")
@@ -10,59 +7,6 @@ if 'mode' not in st.session_state:
     st.session_state['mode'] = 'Light Mode'
 
 mode = st.session_state['mode']
-
-dates = pd.date_range(start="2024-01-01", periods=12, freq='M')
-districts = ["North", "South", "East", "West", "Central"]
-
-df = pd.DataFrame({
-    "Date": np.tile(dates, len(districts)),
-    "District": np.repeat(districts, len(dates)),
-    "Transactions": np.random.randint(100, 1000, len(dates) * len(districts))
-})
-
-fig = px.line(
-    df,
-    x="Date",
-    y="Transactions",
-    color="District",
-    title="Monthly Transactions by District",
-    color_discrete_map={
-        "North": "#00b4d8",
-        "South": "#90e0ef",
-        "East": "#0077b6",
-        "West": "#48cae4",
-        "Central": "#0096c7"
-    }
-)
-
-if mode == "Light Mode":
-    fig.update_layout(
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        font_color="#222831",
-        title_font_color="#222831",
-        legend_title_font_color="#222831",
-        legend_font_color="#222831",
-        xaxis_title_font=dict(color="#222831"),
-        yaxis_title_font=dict(color="#222831"),
-        xaxis_tickfont=dict(color="#222831"),
-        yaxis_tickfont=dict(color="#222831"),
-    )
-else:
-    fig.update_layout(
-        plot_bgcolor="#001c1c",
-        paper_bgcolor="#001c1c",
-        font_color="#f0f0f0",
-        title_font_color="#f0f0f0",
-        legend_title_font_color="#f0f0f0",
-        legend_font_color="#f0f0f0",
-        xaxis_title_font=dict(color="#f0f0f0"),
-        yaxis_title_font=dict(color="#f0f0f0"),
-        xaxis_tickfont=dict(color="#f0f0f0"),
-        yaxis_tickfont=dict(color="#f0f0f0"),
-    )
-
-st.plotly_chart(fig, use_container_width=True)
 
 if mode == "Light Mode":
     st.markdown("""

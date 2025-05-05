@@ -1,7 +1,4 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.express as px
 
 st.set_page_config(page_title="Revenue Insights", layout="wide")
 st.title("Revenue Insights")
@@ -10,44 +7,6 @@ if 'mode' not in st.session_state:
     st.session_state['mode'] = 'Light Mode'
 
 mode = st.session_state['mode']
-
-df = pd.DataFrame({
-    "Month": pd.date_range("2024-01-01", periods=12, freq="M")
-})
-df["Revenue"] = np.random.randint(5000, 20000, size=len(df))
-
-fig = px.bar(
-    df,
-    x="Month",
-    y="Revenue",
-    title="Monthly Revenue Overview",
-    color_discrete_sequence=["#00b4d8"]
-)
-
-if mode == "Light Mode":
-    fig.update_layout(
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        font_color="#222831",
-        title_font_color="#222831",
-        xaxis_title_font=dict(color="#222831"),
-        yaxis_title_font=dict(color="#222831"),
-        xaxis_tickfont=dict(color="#222831"),
-        yaxis_tickfont=dict(color="#222831"),
-    )
-else:
-    fig.update_layout(
-        plot_bgcolor="#001c1c",
-        paper_bgcolor="#001c1c",
-        font_color="#f0f0f0",
-        title_font_color="#f0f0f0",
-        xaxis_title_font=dict(color="#f0f0f0"),
-        yaxis_title_font=dict(color="#f0f0f0"),
-        xaxis_tickfont=dict(color="#f0f0f0"),
-        yaxis_tickfont=dict(color="#f0f0f0"),
-    )
-
-st.plotly_chart(fig, use_container_width=True)
 
 if mode == "Light Mode":
     st.markdown("""
@@ -61,6 +20,7 @@ if mode == "Light Mode":
         header[data-testid="stHeader"] {background: none;}
         </style>
     """, unsafe_allow_html=True)
+
 else:
     st.markdown("""
         <style>

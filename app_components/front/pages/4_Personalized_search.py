@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
-import sqlalchemy as sql
-from sqlalchemy import text
+import requests
 from dotenv import load_dotenv
 import os
 
@@ -14,17 +13,22 @@ mode = st.session_state['mode']
 st.title("Personalized Customer Search")
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL is not set in .env")
-engine = sql.create_engine(DATABASE_URL, echo=False)
+API_CUSTOMER_ENDPOINT = os.getenv("API_CUSTOMER_ENDPOINT")
+if not API_CUSTOMER_ENDPOINT:
+    raise ValueError("API_CUSTOMER_ENDPOINT is not set in .env")
 
-def get_customer_by_id(customer_id: int): 
-    query = text('SELECT * FROM "DimCustomer" WHERE "CustomerKey" = :cust_id')
-    with engine.connect() as conn:
-        result = conn.execute(query, {"cust_id": customer_id}).fetchone()
-        if result:
-            return pd.DataFrame([dict(result._mapping)])
+def get_customer_by_id_api(customer_id: int):
+    try:
+        url = f"{API_CUSTOMER_ENDPOINT}/{customer_id}"
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            if "detail" in data:
+                return pd.DataFrame() 
+            return pd.DataFrame([data])
+        return pd.DataFrame()
+    except Exception as e:
+        st.error(f"API error: {e}")
         return pd.DataFrame()
 
 cust_id_input = st.text_input("Enter Customer ID (e.g., 1)")
@@ -32,7 +36,7 @@ cust_id_input = st.text_input("Enter Customer ID (e.g., 1)")
 if cust_id_input:
     try:
         cust_id = int(cust_id_input)
-        result = get_customer_by_id(cust_id)
+        result = get_customer_by_id_api(cust_id)
         if not result.empty:
             st.success("Customer found:")
             st.dataframe(result)
@@ -44,16 +48,52 @@ if cust_id_input:
 if mode == "Light Mode":
     st.markdown("""
         <style>
-        .stApp {background-color: #e0f7f9; font-family: 'Segoe UI', sans-serif; color: #006d77;}
-        .block-container {padding-top: 1rem; background-color: white; border-radius: 12px; box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.05);}
-        section[data-testid="stSidebar"] {background: linear-gradient(to bottom, #a0e9eb, #e0f7f9);}
-        section[data-testid="stSidebar"] * {color: #006d77 !important;}
-        h1, h2, h3 {font-weight: 700; color: #008080;}
-        footer {visibility: hidden;}
-        header[data-testid="stHeader"] {background: none;}
+        .stApp {
+            background-color: #e0f7f9;
+            font-family: 'Segoe UI', sans-serif;
+            color: #006d77;
+        }
+        .block-container {
+            padding-top: 1rem;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.05);
+        }
+        section[data-testid="stSidebar"] {
+            background: linear-gradient(to bottom, #a0e9eb, #e0f7f9);
+        }
+        section[data-testid="stSidebar"] * {
+            color: #006d77 !important;
+        }
+        h1, h2, h3 {
+            font-weight: 700;
+            color: #008080;
+        }
+        footer {
+            visibility: hidden;
+        }
+        header[data-testid="stHeader"] {
+            background: none;
+        }
+
+        /* Input label text */
+        label {
+            color: #006d77 !important;
+        }
+
+        /* Input field text */
+        input {
+            color: #ffffff !important;
+        }
+
+        /* Success box text fix */
+        .stAlert-success p {
+            color: #008080 !important;
+            font-weight: 600;
+            font-size: 1rem;
+        }
         </style>
     """, unsafe_allow_html=True)
-
 else:
     st.markdown("""
         <style>

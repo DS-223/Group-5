@@ -51,26 +51,15 @@ services:
       db:
         condition: service_healthy
 
-  # ds:
-  #   container_name: ds_service
-  #   build:
-  #     context: ./ds
-  #     dockerfile: Dockerfile
-  #   volumes:
-  #     - ./ds:/ds
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - db
-
+  
   ds:
     build:
-      context: .
-      dockerfile: ds/Dockerfile  # or your actual Dockerfile path
+      context: ./ds
+      dockerfile: ds/Dockerfile  
     env_file:
-      - ./ds/.env  # ✅ Make sure this path is correct!
+      - ./ds/.env  
     volumes:
-      - .:/ds  # ✅ Mounts your full project into the container
+      - .:/ds 
     working_dir: /ds
     command: python ds_main.py
 

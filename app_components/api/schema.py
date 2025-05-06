@@ -33,4 +33,22 @@ class CustomerCreate(BaseModel):
 class MonthlyRevenue(BaseModel):
     month: str  # Example: "Mar 2024"
     revenue: float
-    
+
+class CustomerTransactionOut(BaseModel):
+    transaction_id: int
+    date: datetime
+    store: str
+    amount: float
+
+    class Config:
+        from_attributes = True
+
+
+class GenderCount(BaseModel):
+    gender: str
+    count: int
+
+
+class StoreTransactionSum(BaseModel):
+    store: str
+    total_amount: float

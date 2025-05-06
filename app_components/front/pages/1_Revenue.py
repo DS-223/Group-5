@@ -101,7 +101,7 @@ if not df.empty:
             tickfont=dict(color=label_color)
         ),
         yaxis=dict(
-            title=dict(text="Revenue ($)", font=dict(size=16, color=label_color)),
+            title=dict(text="Revenue", font=dict(size=16, color=label_color)),
             tickfont=dict(color=label_color)
         ),
         plot_bgcolor="rgba(0,0,0,0)",

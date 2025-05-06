@@ -27,4 +27,4 @@ COPY . .
 EXPOSE 3000
 
 # Default command
-CMD ["python"]
+CMD ["python", "ds_main.py"]

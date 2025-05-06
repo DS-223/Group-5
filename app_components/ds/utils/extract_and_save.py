@@ -6,9 +6,18 @@ from dotenv import load_dotenv
 import os
 
 # Load env vars and create engine
+# dotenv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+# load_dotenv(".env")
+# DATABASE_URL = os.getenv("DATABASE_URL")
+
 dotenv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
-load_dotenv(".env")
+load_dotenv(dotenv_path)
+
 DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise EnvironmentError("DATABASE_URL not found or empty. Make sure ds/.env contains it.")
+
+
 engine = create_engine(DATABASE_URL)
 
 def extract_transaction_data(csv_path: str = "customer_transactions.csv") -> None:

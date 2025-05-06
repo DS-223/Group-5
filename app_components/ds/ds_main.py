@@ -1,4 +1,5 @@
-from db_ops.extract_and_save import extract_transaction_data, save_csv_to_db
+from db_ops.extract_and_save import extract_transaction_data
+from db_ops.db_writer import save_csv_to_db
 from utils.rfm_analyzer import RFMAnalyzer
 
 def main():

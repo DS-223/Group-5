@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from columns import FactTransaction, DimDate, DimCustomer, DimStore
-from schema import CustomerCreate, CustomerOut, MonthlyRevenue
+from schema import CustomerCreate, CustomerOut, MonthlyRevenue, CustomerTransactionOut, GenderCount, StoreTransactionSum
 from typing import List, Dict
 from sqlalchemy import func
 from datetime import datetime
@@ -97,7 +97,7 @@ def download_transaction_report(db: Session = Depends(get_db)):
     )
 
     # Debug print
-    print(f"✅ Retrieved {len(results)} rows from the joined query")
+    print(f"Retrieved {len(results)} rows from the joined query")
 
     if not results:
         return {"message": "No transaction data found to export."}
@@ -160,3 +160,53 @@ def get_monthly_revenue(db: Session = Depends(get_db)):
         )
         for month, year, total in results
     ]
+
+
+@app.get("/customers/{customer_id}/transactions", response_model=List[CustomerTransactionOut])
+def get_customer_transactions(customer_id: int, db: Session = Depends(get_db)):
+    """
+    Returns all transactions made by a specific customer.
+    """
+    results = (
+        db.query(
+            FactTransaction.TransactionKey.label("transaction_id"),
+            DimDate.Date.label("date"),
+            DimStore.Name.label("store"),
+            FactTransaction.Amount.label("amount"),
+        )
+        .join(DimDate, FactTransaction.TransactionDateKey == DimDate.DateKey)
+        .join(DimStore, FactTransaction.StoreKey == DimStore.StoreID)
+        .filter(FactTransaction.CustomerKey == customer_id)
+        .order_by(DimDate.Date)
+        .all()
+    )
+
+    return results
+
+
+@app.get("/analytics/customer-count-by-gender", response_model=List[GenderCount])
+def get_customer_count_by_gender(db: Session = Depends(get_db)):
+    results = (
+        db.query(
+            DimCustomer.Gender.label("gender"),
+            func.count(DimCustomer.CustomerKey).label("count")
+        )
+        .group_by(DimCustomer.Gender)
+        .all()
+    )
+    return results
+
+
+@app.get("/analytics/transaction-amount-by-store", response_model=List[StoreTransactionSum])
+def get_transaction_amount_by_store(db: Session = Depends(get_db)):
+    results = (
+        db.query(
+            DimStore.Name.label("store"),
+            func.sum(FactTransaction.Amount).label("total_amount")
+        )
+        .join(FactTransaction, FactTransaction.StoreKey == DimStore.StoreID)
+        .group_by(DimStore.Name)
+        .all()
+    )
+    return results
+

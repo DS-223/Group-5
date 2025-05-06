@@ -5,6 +5,7 @@ cachetools==5.5.2
 certifi==2025.4.26
 charset-normalizer==3.4.2
 click==8.1.8
+dotenv==0.9.9
 gitdb==4.0.12
 GitPython==3.1.44
 idna==3.10
@@ -17,6 +18,7 @@ numpy==2.2.5
 packaging==24.2
 pandas==2.2.3
 pillow==11.2.1
+plotly==6.0.1
 protobuf==6.30.2
 psycopg2-binary==2.9.10
 pyarrow==20.0.0

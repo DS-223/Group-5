@@ -1,32 +1,5 @@
-# from utils.rfm_analyzer import RFMAnalyzer
-
-# def main():
-#     # RFM Analysis using real data
-#     data_filename = 'example_data/transaction_report.csv'
-#     analyzer = RFMAnalyzer(data_file=data_filename)
-
-#     analyzer.calculate_rfm()
-#     analyzer.score_rfm()
-#     rfm = analyzer.segment_customers()
-
-#     # Apply KNN to classify numeric-only segments
-#     reclassified = analyzer.classify_unknown_segments(k=5)
-#     if not reclassified.empty:
-#         print(f"🔁 Reclassified {len(reclassified)} customers using KNN.")
-
-#     segment_analysis = analyzer.analyze_segments()
-
-#     rfm_filename = 'outputs/rfm_results.csv'
-#     analyzer.save_results(filename=rfm_filename)
-#     print(f"✅ RFM results saved to '{rfm_filename}'.")
-
-#     print("\n📊 RFM Segment Analysis:")
-#     print(segment_analysis)
-
-
-# main.py
-
-from utils.extract_and_save import extract_transaction_data
+from db_ops.extract_and_save import extract_transaction_data
+from db_ops.db_writer import save_csv_to_db
 from utils.rfm_analyzer import RFMAnalyzer
 
 def main():
@@ -49,6 +22,9 @@ def main():
     # Step 5: Save detailed results
     analyzer.save_results("outputs/rfm_results.csv")
     print("\nRFM results saved to 'outputs/rfm_results.csv'.")
+
+    # Save RFM results to DB
+    save_csv_to_db("outputs/rfm_results.csv", table_name="RFMResults")
 
 if __name__ == "__main__":
     main()

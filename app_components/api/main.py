@@ -2,8 +2,10 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from columns import FactTransaction, DimDate, DimCustomer, DimStore
-from schema import CustomerCreate, CustomerOut
+from schema import CustomerCreate, CustomerOut, MonthlyRevenue
 from typing import List, Dict
+from sqlalchemy import func
+from datetime import datetime
 import pandas as pd
 from fastapi.responses import FileResponse
 import os
@@ -131,3 +133,30 @@ def download_transaction_report(db: Session = Depends(get_db)):
         filename="transaction_report.csv",
         media_type="text/csv"
     )
+
+
+@app.get("/revenue/monthly", response_model=List[MonthlyRevenue])
+def get_monthly_revenue(db: Session = Depends(get_db)):
+    """
+    Returns monthly revenue totals.
+    Format: [{"month": "Mar 2024", "revenue": 12345.67}, ...]
+    """
+    results = (
+        db.query(
+            DimDate.Month,
+            DimDate.Year,
+            func.sum(FactTransaction.Amount).label("total_revenue")
+        )
+        .join(FactTransaction, DimDate.DateKey == FactTransaction.TransactionDateKey)
+        .group_by(DimDate.Year, DimDate.Month)
+        .order_by(DimDate.Year, DimDate.Month)
+        .all()
+    )
+
+    return [
+        MonthlyRevenue(
+            month=datetime(year, month, 1).strftime("%b %Y"),
+            revenue=round(total, 2)
+        )
+        for month, year, total in results
+    ]

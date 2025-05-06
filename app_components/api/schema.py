@@ -28,3 +28,9 @@ class CustomerCreate(BaseModel):
 
     class Config:
         populate_by_name = True
+
+
+class MonthlyRevenue(BaseModel):
+    month: str  # Example: "Mar 2024"
+    revenue: float
+    

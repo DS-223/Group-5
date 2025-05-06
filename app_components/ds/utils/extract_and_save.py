@@ -10,13 +10,20 @@ import os
 # load_dotenv(".env")
 # DATABASE_URL = os.getenv("DATABASE_URL")
 
-dotenv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
-load_dotenv(dotenv_path)
+# dotenv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+# load_dotenv(dotenv_path)
+
+# DATABASE_URL = os.getenv("DATABASE_URL")
+# if not DATABASE_URL:
+#     raise EnvironmentError("DATABASE_URL not found or empty. Make sure ds/.env contains it.")
+
+
+# engine = create_engine(DATABASE_URL)
+
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
-    raise EnvironmentError("DATABASE_URL not found or empty. Make sure ds/.env contains it.")
-
+    raise EnvironmentError("DATABASE_URL not found in environment. Make sure Docker is injecting it.")
 
 engine = create_engine(DATABASE_URL)
 

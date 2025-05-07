@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, Date, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -59,3 +59,21 @@ class FactTransaction(Base):
     date = relationship("DimDate", back_populates="transactions")
     customer = relationship("DimCustomer", back_populates="transactions")
     store = relationship("DimStore", back_populates="transactions")
+
+
+class RFMResults(Base):
+    __tablename__ = "RFMResults"
+
+    card_code = Column(String(50), primary_key=True)
+    recency = Column(Integer)
+    frequency = Column(Integer)
+    monetary = Column(Float)
+    r_score = Column(Integer)
+    f_score = Column(Integer)
+    m_score = Column(Integer)
+    rfm_score = Column(String(3))
+    rfm_sum = Column(Integer)
+    segment = Column(String(50))
+    gender = Column(String(10))
+    date_of_birth = Column(Date)
+    age = Column(Integer)

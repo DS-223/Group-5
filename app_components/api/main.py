@@ -1,19 +1,33 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
-from columns import FactTransaction, DimDate, DimCustomer, DimStore
-from schema import CustomerCreate, CustomerOut, MonthlyRevenue, CustomerTransactionOut, GenderCount, StoreTransactionSum
+from columns import (FactTransaction, 
+                     DimDate, DimCustomer, 
+                     DimStore, 
+                     RFMResults)
+from schema import (CustomerCreate, 
+                    CustomerOut, 
+                    MonthlyRevenue, 
+                    CustomerTransactionOut, 
+                    GenderCount, 
+                    StoreTransactionSum, 
+                    CustomerSegmentOut,
+                    StoreMonthlyTransaction)
 from typing import List, Dict
-from sqlalchemy import func
+from sqlalchemy import func, cast, String, BigInteger
 from datetime import datetime
 import pandas as pd
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 import os
+from sqlalchemy import inspect
+from database import engine
 
 
 app = FastAPI(title="Customer Management API")
 
-
+#------------------------------------------------------------------------------------------------------
+#--------------------------------------By Customers----------------------------------------------------
+#------------------------------------------------------------------------------------------------------
 @app.post("/customers/", response_model=CustomerOut)
 async def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
     """
@@ -72,69 +86,22 @@ async def delete_customer(customer_id: int, db: Session = Depends(get_db)):
     return {"message": "Customer deleted successfully"}
 
 
-@app.get("/transactions/report/download")
-def download_transaction_report(db: Session = Depends(get_db)):
-    """
-    Generates a joined transaction report (date, customer, store, etc.) and exports it as a CSV file for the modeling.
-    """
+
+@app.get("/analytics/customer-count-by-gender", response_model=List[GenderCount])
+def get_customer_count_by_gender(db: Session = Depends(get_db)):
     results = (
         db.query(
-            DimDate.Date.label("date"),
-            DimCustomer.CustomerCardCode.label("card_code"),
-            DimCustomer.CustomerKey.label("customer_key"),
-            DimCustomer.Address.label("customer_address"),
-            DimCustomer.Phone.label("customer_phone"),
-            DimCustomer.RegistrationDate.label("issue_date"),
-            DimCustomer.BirthDate.label("date_of_birth"),
             DimCustomer.Gender.label("gender"),
-            DimStore.Name.label("store"),
-            FactTransaction.Amount.label("transaction_amount"),
+            func.count(DimCustomer.CustomerKey).label("count")
         )
-        .join(DimDate, FactTransaction.TransactionDateKey == DimDate.DateKey)
-        .join(DimCustomer, FactTransaction.CustomerKey == DimCustomer.CustomerKey)
-        .join(DimStore, FactTransaction.StoreKey == DimStore.StoreID)
+        .group_by(DimCustomer.Gender)
         .all()
     )
+    return results
 
-    # Debug print
-    print(f"Retrieved {len(results)} rows from the joined query")
-
-    if not results:
-        return {"message": "No transaction data found to export."}
-
-    # Prepare list of dicts
-    data = [
-        {
-            "date": r.date,
-            "store": r.store,
-            "card_code": r.card_code,
-            "customer_key": r.customer_key,
-            "customer_address": r.customer_address,
-            "customer_phone": r.customer_phone,
-            "issue_date": r.issue_date,
-            "date_of_birth": r.date_of_birth,
-            "gender": r.gender,
-            "transaction_amount": r.transaction_amount
-        }
-        for r in results
-    ]
-
-    # Ensure output folder exists
-    export_dir = "exports"
-    os.makedirs(export_dir, exist_ok=True)
-    file_path = os.path.join(export_dir, "transaction_report.csv")
-
-    # Save to CSV
-    df = pd.DataFrame(data)
-    df.to_csv(file_path, index=False, encoding='utf-8-sig')
-
-    return FileResponse(
-        path=file_path,
-        filename="transaction_report.csv",
-        media_type="text/csv"
-    )
-
-
+#------------------------------------------------------------------------------------------------------
+#------------------------------Transations/Revenue-----------------------------------------------------
+#------------------------------------------------------------------------------------------------------
 @app.get("/revenue/monthly", response_model=List[MonthlyRevenue])
 def get_monthly_revenue(db: Session = Depends(get_db)):
     """
@@ -184,17 +151,34 @@ def get_customer_transactions(customer_id: int, db: Session = Depends(get_db)):
     return results
 
 
-@app.get("/analytics/customer-count-by-gender", response_model=List[GenderCount])
-def get_customer_count_by_gender(db: Session = Depends(get_db)):
+@app.get("/analytics/transactions-by-store-month", response_model=List[StoreMonthlyTransaction])
+def transactions_by_store(db: Session = Depends(get_db)):
+    """
+    Returns monthly transaction totals for each store.
+    """
     results = (
         db.query(
-            DimCustomer.Gender.label("gender"),
-            func.count(DimCustomer.CustomerKey).label("count")
+            DimStore.Name.label("store"),
+            DimDate.Year,
+            DimDate.Month,
+            func.sum(FactTransaction.Amount).label("total_amount")
         )
-        .group_by(DimCustomer.Gender)
+        .join(FactTransaction, FactTransaction.StoreKey == DimStore.StoreID)
+        .join(DimDate, FactTransaction.TransactionDateKey == DimDate.DateKey)
+        .group_by(DimStore.Name, DimDate.Year, DimDate.Month)
+        .order_by(DimStore.Name, DimDate.Year, DimDate.Month)
         .all()
     )
-    return results
+
+    return [
+        StoreMonthlyTransaction(
+            store=store,
+            month=datetime(year, month, 1).strftime("%b %Y"),
+            total_amount=round(amount or 0, 2)
+        )
+        for store, year, month, amount in results
+    ]
+
 
 
 @app.get("/analytics/transaction-amount-by-store", response_model=List[StoreTransactionSum])
@@ -209,4 +193,88 @@ def get_transaction_amount_by_store(db: Session = Depends(get_db)):
         .all()
     )
     return results
+
+#------------------------------------------------------------------------------------------------------
+#------------------------------By Customer Segment-----------------------------------------------------
+#------------------------------------------------------------------------------------------------------
+@app.get("/analytics/customers-by-segment/{segment}", response_model=List[CustomerSegmentOut])
+def get_customers_by_segment(segment: str, db: Session = Depends(get_db)):
+    """
+    Returns customers who belong to a given RFM segment.
+    """
+    results = (
+        db.query(
+            DimCustomer.CustomerKey,
+            DimCustomer.CustomerCardCode,
+            DimCustomer.Name,
+            RFMResults.segment,
+            RFMResults.rfm_sum,
+            RFMResults.age,
+            RFMResults.gender
+        )
+        .join(
+            RFMResults,
+            RFMResults.card_code == cast(DimCustomer.CustomerCardCode, BigInteger)
+        )
+        .filter(func.lower(RFMResults.segment) == segment.lower())
+        .all()
+    )
+
+    if not results:
+        raise HTTPException(status_code=404, detail=f"No customers found for segment '{segment}'")
+
+    return results
+
+
+@app.get("/analytics/segment-distribution/all")
+def get_segment_distribution_all(db: Session = Depends(get_db)):
+    """
+    Returns total segment distribution.
+    """
+    results = (
+        db.query(
+            RFMResults.segment,
+            func.count(RFMResults.card_code).label("count")
+        )
+        .group_by(RFMResults.segment)
+        .all()
+    )
+
+    return JSONResponse(content={segment: count for segment, count in results})
+
+
+@app.get("/analytics/segment-distribution/male")
+def get_segment_distribution_male(db: Session = Depends(get_db)):
+    """
+    Returns segment distribution for males only.
+    """
+    results = (
+        db.query(
+            RFMResults.segment,
+            func.count(RFMResults.card_code).label("count")
+        )
+        .filter(func.lower(RFMResults.gender) == "male")
+        .group_by(RFMResults.segment)
+        .all()
+    )
+
+    return JSONResponse(content={segment: count for segment, count in results})
+
+
+@app.get("/analytics/segment-distribution/female")
+def get_segment_distribution_female(db: Session = Depends(get_db)):
+    """
+    Returns segment distribution for females only.
+    """
+    results = (
+        db.query(
+            RFMResults.segment,
+            func.count(RFMResults.card_code).label("count")
+        )
+        .filter(func.lower(RFMResults.gender) == "female")
+        .group_by(RFMResults.segment)
+        .all()
+    )
+
+    return JSONResponse(content={segment: count for segment, count in results})
 

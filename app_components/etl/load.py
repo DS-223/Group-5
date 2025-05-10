@@ -82,7 +82,8 @@ def load_dimcustomer_table(discount_cards: pd.DataFrame):
             birth_date=row['BirthDate'].strftime('%Y-%m-%d') if pd.notnull(row['BirthDate']) else None,
             gender=row['Gender'],
             phone=row['PhoneNumber'],
-            address=row['CustomerAddress']
+            address=row['CustomerAddress'],
+            email=row['Email']
         )
     db.cursor.execute('SELECT COUNT(*) FROM "DimCustomer";')
     row_count = db.cursor.fetchone()[0]

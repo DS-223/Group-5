@@ -31,6 +31,7 @@ class DimCustomer(Base):
     Gender = Column(String(150))
     Phone = Column(String(150))
     Address = Column(String(150))
+    Email = Column(String(255), nullable=True)
 
     def __repr__(self):
         return f"<DimCustomer(CustomerKey={self.CustomerKey}, Name={self.Name})>"

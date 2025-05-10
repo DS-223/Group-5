@@ -11,6 +11,13 @@ if __name__ == "__main__":
     # --- DimCustomer ---
     discount_cards = transform_qarter()
     load_dimcustomer_table(discount_cards)
+    discount_cards['CustomerCardCode'] = (
+        discount_cards['CustomerCardCode']
+        .astype(str)
+        .str.strip()
+        .str.replace(r"\.0$", "", regex=True)
+    )
+
     cardcode_to_key = dict(zip(discount_cards['CustomerCardCode'], discount_cards['ID']))
 
     raw_tables = [

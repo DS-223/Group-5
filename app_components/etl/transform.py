@@ -1,6 +1,26 @@
 from db.db_conf import engine
 import pandas as pd
 from loguru import logger
+from faker import Faker
+
+faker = Faker()
+
+CUSTOM_EMAILS = {
+    '2717041003249': 'narek_ghukasyan@edu.aua.am',
+    '2717041003379': 'albert_simonyan@edu.aua.am',
+    '2717041009432': 'gayane_hovsepyan@edu.aua.am',
+    '2717041009876': 'mariam_mezhlumyan@edu.aua.am',
+    '2717041011558': 'hayk_nalchajyan@edu.aua.am'
+}
+
+def generate_email(row):
+    code = row['CustomerCardCode']
+    if code in CUSTOM_EMAILS:
+        return CUSTOM_EMAILS[code]
+    else:
+        name_slug = row['Name'].strip().lower().replace(' ', '.')[:30]
+        return f"{name_slug}@example.com" if name_slug else faker.email()
+
 
 def transform_qarter():
     """
@@ -110,7 +130,8 @@ def transform_qarter():
     # Ensuring PhoneNumber is a string and has a maximum length of 50 characters, else just drop it altogether
     discount_cards['PhoneNumber'] = discount_cards['PhoneNumber'].apply(
     lambda x: x if pd.notnull(x) and len(str(x)) <= 50 else 'Unknown')
-    
+
+    discount_cards['Email'] = discount_cards.apply(generate_email, axis=1)    
     logger.info(f"Done! Cleaned {len(discount_cards)} rows.")
     return discount_cards
 

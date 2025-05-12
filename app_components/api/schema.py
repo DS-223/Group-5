@@ -52,3 +52,22 @@ class GenderCount(BaseModel):
 class StoreTransactionSum(BaseModel):
     store: str
     total_amount: float
+
+
+class CustomerSegmentOut(BaseModel):
+    CustomerKey: int
+    CustomerCardCode: str
+    Name: Optional[str]
+    segment: str
+    rfm_sum: Optional[int]
+    age: Optional[int]
+    gender: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+class StoreMonthlyTransaction(BaseModel):
+    store: str
+    month: str  # Example: "Mar 2024"
+    total_amount: float

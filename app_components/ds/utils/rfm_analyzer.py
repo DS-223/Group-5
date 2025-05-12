@@ -5,8 +5,21 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import StandardScaler
 
 class RFMAnalyzer:
+    """
+    A class to perform RFM (Recency, Frequency, Monetary) analysis on customer transaction data.
+    Supports scoring, segmentation, and optional KNN-based classification of unknown segments.
+    """
+
     def __init__(self, data_file) -> None:
-        # Load CSV
+        """
+        Initialize the RFMAnalyzer with data from a CSV file.
+
+        Parameters:
+        - data_file (str): Path to the input CSV file containing transaction data.
+        
+        Raises:
+        - ValueError: If the CSV is empty, or lacks required columns.
+        """
         self.df = pd.read_csv(data_file, encoding='utf-8-sig')
         if self.df.empty:
             raise ValueError(f"Input file '{data_file}' is empty.")
@@ -24,14 +37,22 @@ class RFMAnalyzer:
         self.rfm: Optional[pd.DataFrame] = None
 
     def _preprocess_data(self) -> None:
-        """Convert date columns to datetime and truncate 'date' to 'YYYY-MM-DD'."""
+        """
+        Internal method to convert relevant date columns to datetime format.
+        Truncates 'date' to only include YYYY-MM-DD.
+        """
         for col in ['date', 'issue_date', 'date_of_birth']:
             if col in self.df.columns:
                 self.df[col] = pd.to_datetime(self.df[col], errors='coerce')
         self.df['date'] = self.df['date'].dt.strftime('%Y-%m-%d')
 
     def calculate_rfm(self) -> pd.DataFrame:
-        """Compute Recency, Frequency, and Monetary per card_code."""
+        """
+        Calculate Recency, Frequency, and Monetary metrics per customer.
+
+        Returns:
+        - pd.DataFrame: DataFrame with 'card_code', 'recency', 'frequency', and 'monetary' columns.
+        """
         self.rfm = (
             self.customer_df
             .groupby('card_code')
@@ -45,7 +66,15 @@ class RFMAnalyzer:
         return self.rfm
 
     def score_rfm(self) -> pd.DataFrame:
-        """Score R, F, and M on fixed business intervals."""
+        """
+        Assign scores to Recency, Frequency, and Monetary values using fixed intervals.
+
+        Returns:
+        - pd.DataFrame: RFM table with added 'r_score', 'f_score', 'm_score', 'rfm_score', and 'rfm_sum'.
+        
+        Raises:
+        - ValueError: If calculate_rfm() has not been run yet.
+        """
         if self.rfm is None:
             raise ValueError("Run calculate_rfm() first.")
         def r_score(x): return 5 if x < 5 else 4 if x < 15 else 3 if x < 30 else 2 if x < 60 else 1
@@ -65,7 +94,15 @@ class RFMAnalyzer:
         return self.rfm
 
     def segment_customers(self) -> pd.DataFrame:
-        """Map composite codes to named segments and reclassify unknown codes via KNN."""
+        """
+        Assign customers to behavioral segments based on their RFM score.
+
+        Returns:
+        - pd.DataFrame: Updated RFM table with customer segment labels.
+
+        Raises:
+        - ValueError: If score_rfm() has not been run yet.
+        """
         if self.rfm is None:
             raise ValueError("Run score_rfm() first.")
 
@@ -99,8 +136,16 @@ class RFMAnalyzer:
 
     def classify_unknown_segments(self, k: int = 5) -> pd.DataFrame:
         """
-        Standardize R/F/M scores and use KNN to label any remaining numeric codes.
-        Returns rows that were reclassified.
+        Use KNN to classify customers whose segment is still an RFM numeric code.
+
+        Parameters:
+        - k (int): Number of neighbors to use in KNN classifier.
+
+        Returns:
+        - pd.DataFrame: DataFrame of the reclassified rows.
+        
+        Raises:
+        - ValueError: If segment_customers() has not been run yet.
         """
         if self.rfm is None:
             raise ValueError("Run segment_customers() first.")
@@ -123,7 +168,15 @@ class RFMAnalyzer:
         return self.rfm.loc[mask].copy()
 
     def analyze_segments(self) -> pd.DataFrame:
-        """Aggregate metrics by (now fully-labeled) segment."""
+        """
+        Generate summary statistics for each customer segment.
+
+        Returns:
+        - pd.DataFrame: Aggregated metrics including mean R, F, M, age, count, and percentage.
+        
+        Raises:
+        - ValueError: If segment_customers() has not been run yet.
+        """
         if self.rfm is None:
             raise ValueError("Run segment_customers() first.")
         result = (
@@ -140,8 +193,16 @@ class RFMAnalyzer:
         result['percentage'] = (result['count']/result['count'].sum())*100
         return result.sort_values('count', ascending=False)
 
-    def save_results(self, filename: str = 'outputs/rfm_results.csv') -> None:
-        """Export the full RFM table to CSV."""
+    def save_results(self, filename: str = 'example_data/rfm_results.csv') -> None:
+        """
+        Save the RFM table with segments to a CSV file.
+
+        Parameters:
+        - filename (str): Output file path. Default is 'example_data/rfm_results.csv'.
+
+        Raises:
+        - ValueError: If RFM analysis has not been performed yet.
+        """
         if self.rfm is None:
             raise ValueError("Nothing to save; run your analysis first.")
         self.rfm.to_csv(filename, index=False, encoding='utf-8-sig')

@@ -1,5 +1,31 @@
-import psycopg2
+"""
+This module provides a class `TransactionDatabase` for interacting with a PostgreSQL database.
+It includes methods for inserting, updating, deleting, and fetching data from various tables
+such as `DimDate`, `DimCustomer`, and `FactTransactions`.
+Classes:
+    - TransactionDatabase: A class to manage database operations for transactions.
+Methods:
+    - __init__(self, host, database, user, password):
+        Initialize the TransactionDatabase with a PostgreSQL connection.
+    - insert_date(self, date_key, date, day, month, year, day_of_week, month_name, day_name, quarter):
+        Insert a date record into the DimDate table.
+    - insert_customer(self, customer_key, card_code, name, RegistrationDate, birth_date, gender, phone, address, email):
+        Insert a customer record into the DimCustomer table.
+    - peek_table_head(self, table_name, limit=5):
+        Fetch the first few rows from the specified table.
+    - add_transaction(self, transaction_key, transaction_date_key, customer_key, store_key, amount):
+        Add a new transaction to the FactTransactions table.
+    - fetch_transactions(self):
+        Fetch all transactions with details from related tables.
+    - update_transaction_amount(self, transaction_key, new_amount):
+        Update the amount of an existing transaction.
+    - delete_transaction(self, transaction_key):
+        Delete a transaction from the FactTransactions table.
+    - close_connection(self):
+        Close the database connection.
+"""
 from db.create_tables import create_tables
+import psycopg2
 
 class TransactionDatabase:
     def __init__(self, host, database, user, password):
@@ -23,14 +49,14 @@ class TransactionDatabase:
         self.conn.commit()
         # print(f"Date with DateKey {date_key} inserted into DimDate successfully.")
 
-    def insert_customer(self, customer_key, card_code, name, RegistrationDate, birth_date, gender, phone, address):
+    def insert_customer(self, customer_key, card_code, name, RegistrationDate, birth_date, gender, phone, address, email):
         """Insert a customer record into the DimCustomer table."""
         self.cursor.execute("""
             INSERT INTO "DimCustomer"
-            ("CustomerKey", "CustomerCardCode", "Name", "RegistrationDate", "BirthDate", "Gender", "Phone", "Address")
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            ("CustomerKey", "CustomerCardCode", "Name", "RegistrationDate", "BirthDate", "Gender", "Phone", "Address", "Email")
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT ("CustomerKey") DO NOTHING
-        """, (customer_key, card_code, name, RegistrationDate, birth_date, gender, phone, address))
+        """, (customer_key, card_code, name, RegistrationDate, birth_date, gender, phone, address, email))
         self.conn.commit()
         # print(f"Customer with CustomerKey {customer_key} inserted into DimCustomer successfully.")
 

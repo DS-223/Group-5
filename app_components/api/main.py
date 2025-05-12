@@ -1,6 +1,6 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks  
 from sqlalchemy.orm import Session
-from database import get_db
+from database import get_db, engine
 from columns import (FactTransaction, 
                      DimDate, DimCustomer, 
                      DimStore, 
@@ -20,7 +20,8 @@ import pandas as pd
 from fastapi.responses import FileResponse, JSONResponse
 import os
 from sqlalchemy import inspect
-from database import engine
+from email_utils import EmailCampaignManager
+
 
 
 app = FastAPI(title="Customer Management API")
@@ -278,3 +279,25 @@ def get_segment_distribution_female(db: Session = Depends(get_db)):
 
     return JSONResponse(content={segment: count for segment, count in results})
 
+#------------------------------------------------------------------------------------------------------
+#-----------------------------------Sending Emails-----------------------------------------------------
+#------------------------------------------------------------------------------------------------------
+@app.get("/analytics/segments_for_button", response_model=list[str])
+def list_segments(db: Session = Depends(get_db)):
+    rows = db.query(RFMResults.segment).distinct().all()
+    return [r[0] for r in rows]
+
+
+@app.post("/campaigns/{segment}")
+def launch_campaign(
+    segment: str,
+    background: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    mgr = EmailCampaignManager(segment, engine, 'hayk_nalchajyan@edu.aua.am', 'uclr rwxq annw rksa')
+    count = mgr.fetch_emails()
+    if count == 0:
+        raise HTTPException(404, f"No addresses found for segment '{segment}'")
+
+    background.add_task(mgr.send_emails)
+    return {"detail": f"Queued {count} e-mails for segment '{segment}'"}

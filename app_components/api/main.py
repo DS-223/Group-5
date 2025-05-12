@@ -1,6 +1,6 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks  
 from sqlalchemy.orm import Session
-from database import get_db
+from database import get_db, engine
 from columns import (FactTransaction, 
                      DimDate, DimCustomer, 
                      DimStore, 
@@ -12,15 +12,17 @@ from schema import (CustomerCreate,
                     GenderCount, 
                     StoreTransactionSum, 
                     CustomerSegmentOut,
-                    StoreMonthlyTransaction)
+                    StoreMonthlyTransaction, 
+                    RFMSegmentBlock)
 from typing import List, Dict
-from sqlalchemy import func, cast, String, BigInteger
+from sqlalchemy import func, cast, String, BigInteger, Float
 from datetime import datetime
 import pandas as pd
 from fastapi.responses import FileResponse, JSONResponse
 import os
 from sqlalchemy import inspect
-from database import engine
+from email_utils import EmailCampaignManager
+
 
 
 app = FastAPI(title="Customer Management API")
@@ -278,3 +280,70 @@ def get_segment_distribution_female(db: Session = Depends(get_db)):
 
     return JSONResponse(content={segment: count for segment, count in results})
 
+#------------------------------------------------------------------------------------------------------
+#-----------------------------------Sending Emails-----------------------------------------------------
+#------------------------------------------------------------------------------------------------------
+@app.get("/analytics/segments_for_button", response_model=list[str])
+def list_segments(db: Session = Depends(get_db)):
+    rows = db.query(RFMResults.segment).distinct().all()
+    return [r[0] for r in rows]
+
+
+@app.post("/campaigns/{segment}")
+def launch_campaign(
+    segment: str,
+    background: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    mgr = EmailCampaignManager(segment, engine, 'hayk_nalchajyan@edu.aua.am', 'uclr rwxq annw rksa')
+    count = mgr.fetch_emails()
+    if count == 0:
+        raise HTTPException(404, f"No addresses found for segment '{segment}'")
+
+    background.add_task(mgr.send_emails)
+    return {"detail": f"Queued {count} e-mails for segment '{segment}'"}
+
+
+
+#------------------------------------------------------------------------------------------------------
+#-----------------------------------Segments Block Visual----------------------------------------------
+#------------------------------------------------------------------------------------------------------
+@app.get("/analytics/rfm-matrix", response_model=list[RFMSegmentBlock])
+def rfm_matrix(db: Session = Depends(get_db)):
+    """
+    Returns data for RFM segment matrix:
+    - segment name
+    - user count + %
+    - avg monetary value
+    - recency + frequency score
+    """
+
+    # Step 1: Get total user count
+    total_users = db.query(func.count(RFMResults.card_code)).scalar()
+
+    # Step 2: Query all blocks
+    results = (
+        db.query(
+            RFMResults.segment,
+            func.count(RFMResults.card_code).label("user_count"),
+            func.avg(RFMResults.monetary).label("avg_monetary"),
+            func.max(RFMResults.r_score).label("recency_score"),
+            func.max(RFMResults.f_score).label("frequency_score"),
+        )
+        .group_by(RFMResults.segment)
+        .all()
+    )
+
+    # Step 3: Format response
+    response = []
+    for row in results:
+        response.append(RFMSegmentBlock(
+            segment=row.segment,
+            user_count=row.user_count,
+            user_percent=round((row.user_count / total_users) * 100, 2),
+            avg_monetary=round(row.avg_monetary or 0, 2),
+            recency_score=row.recency_score,
+            frequency_score=row.frequency_score
+        ))
+
+    return response

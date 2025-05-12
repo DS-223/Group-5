@@ -22,16 +22,18 @@ class DimCustomer(Base):
     __tablename__ = "DimCustomer"
     __table_args__ = {'extend_existing': True}
 
-    CustomerKey = Column(Integer, primary_key=True, autoincrement=True)
-    CustomerCardCode = Column(String(20), unique=True)
-    Name = Column(String(150))
-    RegistrationDate = Column(DateTime)
-    BirthDate = Column(DateTime)
-    Gender = Column(String(150))
-    Phone = Column(String(150))
-    Address = Column(String(150))
-
+    CustomerKey       = Column(Integer, primary_key=True, autoincrement=True)
+    CustomerCardCode  = Column(String(20), unique=True)
+    Name              = Column(String(150))
+    RegistrationDate  = Column(DateTime)
+    BirthDate         = Column(DateTime)
+    Gender            = Column(String(150))
+    Phone             = Column(String(150))
+    Address           = Column(String(150))
+    Email             = Column(String(255), nullable=True)           # <-- NEW
+    
     transactions = relationship("FactTransaction", back_populates="customer")
+
 
 
 class DimStore(Base):

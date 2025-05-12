@@ -11,9 +11,11 @@ class CustomerOut(BaseModel):
     Gender: Optional[str]
     Phone: Optional[str]
     Address: Optional[str]
+    Email: Optional[str]                    
 
     class Config:
         from_attributes = True
+
 
 
 class CustomerCreate(BaseModel):
@@ -25,9 +27,11 @@ class CustomerCreate(BaseModel):
     Gender: Optional[str] = Field(None, alias="Gender")
     Phone: Optional[str] = Field(None, alias="Phone")
     Address: Optional[str] = Field(None, alias="Address")
+    Email: Optional[str] = Field(None, alias="Email")                
 
     class Config:
         populate_by_name = True
+
 
 
 class MonthlyRevenue(BaseModel):
@@ -71,3 +75,12 @@ class StoreMonthlyTransaction(BaseModel):
     store: str
     month: str  # Example: "Mar 2024"
     total_amount: float
+
+
+class RFMSegmentBlock(BaseModel):
+    segment: str
+    user_count: int
+    user_percent: float
+    avg_monetary: float
+    recency_score: int
+    frequency_score: int

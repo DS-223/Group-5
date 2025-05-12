@@ -1,4 +1,9 @@
 import streamlit as st
+import requests
+import pandas as pd
+import plotly.express as px
+from dotenv import load_dotenv
+import os
 
 st.set_page_config(page_title="Customer Segmentation", layout="wide")
 st.title("Customer Segmentation")
@@ -20,7 +25,6 @@ if mode == "Light Mode":
         header[data-testid="stHeader"] {background: none;}
         </style>
     """, unsafe_allow_html=True)
-
 else:
     st.markdown("""
         <style>
@@ -33,3 +37,72 @@ else:
         header[data-testid="stHeader"] {background: none;}
         </style>
     """, unsafe_allow_html=True)
+
+theme_teal = "#008080"
+theme_light_text = "#ffffff"
+theme_dark_text = "#f0f0f0"
+bar_color = "#62a6a8"
+
+text_color = theme_dark_text if mode == "Dark Mode" else theme_light_text
+label_color = theme_teal if mode == "Light Mode" else theme_dark_text
+
+load_dotenv()
+API_URL = os.getenv("API_SEGMENTATION_ENDPOINT")
+
+@st.cache_data(show_spinner=True)
+def fetch_segment_distribution():
+    try:
+        response = requests.get(API_URL)
+        if response.status_code == 200:
+            data = response.json()
+            df = pd.DataFrame(list(data.items()), columns=["Segment", "Count"])
+            df = df.sort_values("Count", ascending=False)
+            return df
+        else:
+            st.error(f"API returned status code: {response.status_code}")
+            return pd.DataFrame()
+    except Exception as e:
+        st.error(f"Error fetching segment data: {e}")
+        return pd.DataFrame()
+
+df = fetch_segment_distribution()
+
+if not df.empty:
+    fig = px.bar(
+        df,
+        x="Segment",
+        y="Count",
+        title="Customer Segment Distribution",
+        text_auto=True,
+        labels={"Count": "Number of Customers", "Segment": "Segment"}
+    )
+
+    fig.update_layout(
+        title=dict(
+            text="Customer Segment Distribution",
+            font=dict(size=24, color=label_color)
+        ),
+        font=dict(family="Segoe UI", size=14),
+        xaxis=dict(
+            title=dict(text="Segment", font=dict(size=16, color=label_color)),
+            tickfont=dict(color=label_color)
+        ),
+        yaxis=dict(
+            title=dict(text="Customer Count", font=dict(size=16, color=label_color)),
+            tickfont=dict(color=label_color)
+        ),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(t=60, b=60)
+    )
+
+    fig.update_traces(
+        marker_color=bar_color,
+        textfont_size=12,
+        textfont_color=text_color
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.info("Segment distribution data not available.")
+

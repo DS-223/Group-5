@@ -75,3 +75,12 @@ class StoreMonthlyTransaction(BaseModel):
     store: str
     month: str  # Example: "Mar 2024"
     total_amount: float
+
+
+class RFMSegmentBlock(BaseModel):
+    segment: str
+    user_count: int
+    user_percent: float
+    avg_monetary: float
+    recency_score: int
+    frequency_score: int

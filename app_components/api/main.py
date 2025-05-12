@@ -12,9 +12,10 @@ from schema import (CustomerCreate,
                     GenderCount, 
                     StoreTransactionSum, 
                     CustomerSegmentOut,
-                    StoreMonthlyTransaction)
+                    StoreMonthlyTransaction, 
+                    RFMSegmentBlock)
 from typing import List, Dict
-from sqlalchemy import func, cast, String, BigInteger
+from sqlalchemy import func, cast, String, BigInteger, Float
 from datetime import datetime
 import pandas as pd
 from fastapi.responses import FileResponse, JSONResponse
@@ -301,3 +302,48 @@ def launch_campaign(
 
     background.add_task(mgr.send_emails)
     return {"detail": f"Queued {count} e-mails for segment '{segment}'"}
+
+
+
+#------------------------------------------------------------------------------------------------------
+#-----------------------------------Segments Block Visual----------------------------------------------
+#------------------------------------------------------------------------------------------------------
+@app.get("/analytics/rfm-matrix", response_model=list[RFMSegmentBlock])
+def rfm_matrix(db: Session = Depends(get_db)):
+    """
+    Returns data for RFM segment matrix:
+    - segment name
+    - user count + %
+    - avg monetary value
+    - recency + frequency score
+    """
+
+    # Step 1: Get total user count
+    total_users = db.query(func.count(RFMResults.card_code)).scalar()
+
+    # Step 2: Query all blocks
+    results = (
+        db.query(
+            RFMResults.segment,
+            func.count(RFMResults.card_code).label("user_count"),
+            func.avg(RFMResults.monetary).label("avg_monetary"),
+            func.max(RFMResults.r_score).label("recency_score"),
+            func.max(RFMResults.f_score).label("frequency_score"),
+        )
+        .group_by(RFMResults.segment)
+        .all()
+    )
+
+    # Step 3: Format response
+    response = []
+    for row in results:
+        response.append(RFMSegmentBlock(
+            segment=row.segment,
+            user_count=row.user_count,
+            user_percent=round((row.user_count / total_users) * 100, 2),
+            avg_monetary=round(row.avg_monetary or 0, 2),
+            recency_score=row.recency_score,
+            frequency_score=row.frequency_score
+        ))
+
+    return response

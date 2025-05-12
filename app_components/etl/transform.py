@@ -223,8 +223,7 @@ def transform_store(table_name, cardcode_to_key):
     df = df.rename(columns={'Adresss': 'Adress', 'Cardcode': 'Code'})
 
     # Fill missing codes with 0 and ensure string type
-    df['Code'] = df['Code'].fillna(0).astype(str).str.strip()
-
+    df['Code'] = (df['Code'].fillna(0).astype(str).str.strip().str.replace(r"\.0$", "", regex=True))
     # Fill missing Store with empty string and strip whitespace
     df['Store'] = df['Store'].fillna('').astype(str).str.strip()
 
@@ -253,8 +252,6 @@ def transform_store(table_name, cardcode_to_key):
     # Report missing store mappings
     if df['StoreID'].isnull().any():
         missing = df[df['StoreID'].isnull()]['Store'].unique()
-        logger.warning(f"These store names could not be mapped to StoreID: {missing}")
-
     df = df.drop(columns=['Store'])
 
     return df

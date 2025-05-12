@@ -40,6 +40,10 @@ def main():
     survival_analyzer.plot_weibull_survival_function()
     survival_analyzer.plot_custom_profiles()
 
+    save_csv_to_db("outputs/survival_data.csv", table_name="SurvivalData")
+    save_csv_to_db("outputs/CoxPH_summary.csv", table_name="CoxPHSummary")
+    save_csv_to_db("outputs/WeibullAFT_summary.csv", table_name="WeibullAFTSummary")
+
 
 if __name__ == "__main__":
     main()

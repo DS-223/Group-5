@@ -140,7 +140,7 @@ class RFMAnalyzer:
         result['percentage'] = (result['count']/result['count'].sum())*100
         return result.sort_values('count', ascending=False)
 
-    def save_results(self, filename: str = 'outputs/rfm_results.csv') -> None:
+    def save_results(self, filename: str = 'example_data/rfm_results.csv') -> None:
         """Export the full RFM table to CSV."""
         if self.rfm is None:
             raise ValueError("Nothing to save; run your analysis first.")

@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+import requests
+from dotenv import load_dotenv
+import os
 import plotly.express as px
 
 st.set_page_config(page_title="Revenue Insights", layout="wide")
@@ -8,46 +10,7 @@ st.title("Revenue Insights")
 
 if 'mode' not in st.session_state:
     st.session_state['mode'] = 'Light Mode'
-
 mode = st.session_state['mode']
-
-df = pd.DataFrame({
-    "Month": pd.date_range("2024-01-01", periods=12, freq="M")
-})
-df["Revenue"] = np.random.randint(5000, 20000, size=len(df))
-
-fig = px.bar(
-    df,
-    x="Month",
-    y="Revenue",
-    title="Monthly Revenue Overview",
-    color_discrete_sequence=["#00b4d8"]
-)
-
-if mode == "Light Mode":
-    fig.update_layout(
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        font_color="#222831",
-        title_font_color="#222831",
-        xaxis_title_font=dict(color="#222831"),
-        yaxis_title_font=dict(color="#222831"),
-        xaxis_tickfont=dict(color="#222831"),
-        yaxis_tickfont=dict(color="#222831"),
-    )
-else:
-    fig.update_layout(
-        plot_bgcolor="#001c1c",
-        paper_bgcolor="#001c1c",
-        font_color="#f0f0f0",
-        title_font_color="#f0f0f0",
-        xaxis_title_font=dict(color="#f0f0f0"),
-        yaxis_title_font=dict(color="#f0f0f0"),
-        xaxis_tickfont=dict(color="#f0f0f0"),
-        yaxis_tickfont=dict(color="#f0f0f0"),
-    )
-
-st.plotly_chart(fig, use_container_width=True)
 
 if mode == "Light Mode":
     st.markdown("""
@@ -73,3 +36,85 @@ else:
         header[data-testid="stHeader"] {background: none;}
         </style>
     """, unsafe_allow_html=True)
+
+load_dotenv()
+API_URL = os.getenv("API_REVENUE_ENDPOINT")
+
+theme_teal = "#008080"
+theme_light_text = "#ffffff"
+theme_dark_text = "#f0f0f0"
+
+bar_color = "#62a6a8"
+text_color = theme_dark_text if mode == "Dark Mode" else theme_light_text
+label_color = theme_teal if mode == "Light Mode" else theme_dark_text
+
+@st.cache_data(show_spinner=True)
+def fetch_revenue_data():
+    try:
+        response = requests.get(API_URL)
+        if response.status_code == 200:
+            data = response.json()
+            if isinstance(data, list) and isinstance(data[0], list):
+                df = pd.DataFrame(data, columns=["Month", "Revenue"])
+
+            elif isinstance(data[0], dict):
+                df = pd.DataFrame(data)
+                df.rename(columns={"month": "Month", "revenue": "Revenue"}, inplace=True)
+
+            else:
+                st.error("Unexpected API data format.")
+                return pd.DataFrame()
+
+            df["Month_dt"] = pd.to_datetime(df["Month"], format="%b %Y")
+            df = df.sort_values("Month_dt")
+            return df
+
+        else:
+            st.error(f"API returned status code: {response.status_code}")
+            return pd.DataFrame()
+    except Exception as e:
+        st.error(f"Error fetching data from API: {e}")
+        return pd.DataFrame()
+
+df = fetch_revenue_data()
+
+if not df.empty:
+    text_color = "#000000" if mode == "Light Mode" else "#f0f0f0"
+
+    fig = px.bar(
+        df,
+        x="Month",
+        y="Revenue",
+        title="Monthly Revenue Overview",
+        text_auto=".2s",
+        labels={"Revenue": "Revenue", "Month": "Month"}
+    )
+
+    fig.update_layout(
+        title=dict(
+            text="Monthly Revenue Overview",
+            font=dict(size=24, color=label_color)
+        ),
+        font=dict(family="Segoe UI", size=14),
+        xaxis=dict(
+            title=dict(text="Month", font=dict(size=16, color=label_color)),
+            tickfont=dict(color=label_color)
+        ),
+        yaxis=dict(
+            title=dict(text="Revenue", font=dict(size=16, color=label_color)),
+            tickfont=dict(color=label_color)
+        ),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(t=60, b=60)
+    )
+
+    fig.update_traces(
+        marker_color=bar_color,
+        textfont_size=12,
+        textfont_color=text_color
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.info("Revenue data not available.")

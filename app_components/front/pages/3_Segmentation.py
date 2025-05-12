@@ -1,7 +1,4 @@
 import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.express as px
 
 st.set_page_config(page_title="Customer Segmentation", layout="wide")
 st.title("Customer Segmentation")
@@ -10,52 +7,6 @@ if 'mode' not in st.session_state:
     st.session_state['mode'] = 'Light Mode'
 
 mode = st.session_state['mode']
-
-df = pd.DataFrame({
-    "Recency": np.random.randint(1, 50, 100),
-    "Frequency": np.random.randint(1, 20, 100),
-    "Monetary": np.random.randint(50, 500, 100),
-    "Segment": np.random.choice(["Low", "Medium", "High"], 100)
-})
-
-fig = px.scatter(
-    df,
-    x="Frequency",
-    y="Monetary",
-    color="Segment",
-    size="Recency",
-    title="RFM Segmentation",
-    color_discrete_sequence=["#00e0e0", "#00cfcf", "#00baba"]
-)
-
-if mode == "Light Mode":
-    fig.update_layout(
-        plot_bgcolor="white",
-        paper_bgcolor="white",
-        font_color="#222831",
-        title_font_color="#222831",
-        legend_title_font_color="#222831",
-        legend_font_color="#222831",
-        xaxis_title_font=dict(color="#222831"),
-        yaxis_title_font=dict(color="#222831"),
-        xaxis_tickfont=dict(color="#222831"),
-        yaxis_tickfont=dict(color="#222831"),
-    )
-else:
-    fig.update_layout(
-        plot_bgcolor="#001c1c",
-        paper_bgcolor="#001c1c",
-        font_color="#f0f0f0",
-        title_font_color="#f0f0f0",
-        legend_title_font_color="#f0f0f0",
-        legend_font_color="#f0f0f0",
-        xaxis_title_font=dict(color="#f0f0f0"),
-        yaxis_title_font=dict(color="#f0f0f0"),
-        xaxis_tickfont=dict(color="#f0f0f0"),
-        yaxis_tickfont=dict(color="#f0f0f0"),
-    )
-
-st.plotly_chart(fig, use_container_width=True)
 
 if mode == "Light Mode":
     st.markdown("""
@@ -69,6 +20,7 @@ if mode == "Light Mode":
         header[data-testid="stHeader"] {background: none;}
         </style>
     """, unsafe_allow_html=True)
+
 else:
     st.markdown("""
         <style>

@@ -32,7 +32,6 @@ services:
       - ./pgadmin_data:/var/lib/pgadmin
     depends_on:
       - db
-    
 
   etl:
     container_name: etl
@@ -40,16 +39,34 @@ services:
       context: ./etl
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3001:3000"
     env_file:
       - .env    
     volumes:
       - ./etl:/etl
+      - etl_status:/shared
     depends_on: 
       db:
         condition: service_healthy
     healthcheck:
       test: "exit 0"
+
+  ds:
+    container_name: ds_service
+    build:
+      context: ./ds
+      dockerfile: Dockerfile
+    volumes:
+      - ./ds:/ds
+      - etl_status:/shared
+    ports:
+      - "3002:3000"
+    env_file:
+      - ./.env  
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: /ds/wait-for-etl.sh
 
   api:
     container_name: loyalty_api
@@ -65,18 +82,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-
-  ds:
-    container_name: ds_service
-    build:
-      context: ./ds
-      dockerfile: Dockerfile
-    volumes:
-      - ./ds:/ds
-    ports:
-      - "3000:3000"
-    depends_on:
-      - db
       
   front:
     container_name: streamlit_front
@@ -87,7 +92,12 @@ services:
       - ./front:/front
     ports:
       - 8501:8501
+    env_file:
+      - .env
     environment:
       - API_URL=http://back:8000
     depends_on:
       - api
+
+volumes:
+  etl_status:

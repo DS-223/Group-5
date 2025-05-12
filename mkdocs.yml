@@ -1,0 +1,7 @@
+site_name: Bonus-Card Holders Analysis
+nav:
+  - Home: index.md
+  - API: api.md
+  - App: app.md
+  - Database: database.md
+  - Models: model.md

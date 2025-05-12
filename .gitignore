@@ -9,14 +9,12 @@ pycache/
 
 pycache/
 .ipynb_checkpoints
-.env
 .venv
 venv_docs
 .idea
 .vscode
 .vscode/*
 !.vscode/settings.json
-env/
 venv/
 venv_docs/
 .DS_Store
@@ -51,17 +49,10 @@ MANIFEST
 
 # Virtual environments
 venv/
-env/
 ENV/
 .venv/
-.env/
-.ENV/
 pip-log.txt
 pip-delete-this-directory.txt
-
-# Environments and secrets
-.env
-.env.*
 
 # PyInstaller
 *.manifest

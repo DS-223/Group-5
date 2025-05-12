@@ -40,6 +40,13 @@ from transform import transform_qarter, transform_store, transform_dimdate
 from load import load_dimcustomer_table, load_dimdate_table, load_facttransaction_table
 from loguru import logger
 
+import os
+
+if os.path.exists("/shared/etl_done"):
+    os.remove("/shared/etl_done")
+    logger.info("Removed stale ETL signal file.")
+
+
 if __name__ == "__main__":
 
     create_tables()
@@ -87,3 +94,11 @@ if __name__ == "__main__":
 
     # --- FactTransaction ---
     load_facttransaction_table(transformed_data, dim_date_df)
+
+    # Signal that ETL is done
+    try:
+        with open("/shared/etl_done", "w") as f:
+            f.write("done")
+        logger.info("ETL completed. Signal file created at /shared/etl_done.")
+    except Exception as e:
+        logger.error(f"Failed to write signal file: {e}")

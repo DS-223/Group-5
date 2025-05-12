@@ -1,62 +1,44 @@
-from utils.data_generator import RFMDataGenerator, SurvivalDataGenerator
+from db_ops.extract_and_save import extract_transaction_data
+from db_ops.db_writer import save_csv_to_db
 from utils.rfm_analyzer import RFMAnalyzer
-from utils.recommender import Recommender
 from utils.survival_analyzer import SurvivalAnalyzer
 
 def main():
-    # RFM Analysis
-    data_filename = 'outputs/synthetic_retail_data.csv'
-    rfm_generator = RFMDataGenerator()
-    rfm_generator.generate_customers()
-    df = rfm_generator.save_data(filename=data_filename)
-    print(f"✅ Synthetic data saved to '{data_filename}'.")
+    # Step 1: Extract data from DB and save to CSV
+    extract_transaction_data(csv_path="outputs/customer_transactions.csv")
 
-    analyzer = RFMAnalyzer(data_file=data_filename)
+    # Step 2: Initialize RFM Analyzer
+    analyzer = RFMAnalyzer("outputs/customer_transactions.csv")
+
+    # Step 3: Run full RFM analysis
     analyzer.calculate_rfm()
     analyzer.score_rfm()
-    rfm = analyzer.segment_customers()
-    segment_analysis = analyzer.analyze_segments()
+    analyzer.segment_customers()
 
-    rfm_filename = 'outputs/rfm_results.csv'
-    analyzer.save_results(filename=rfm_filename)
-    print(f"✅ RFM results saved to '{rfm_filename}'.")
+    # Step 4: Analyze and print segment summary
+    segment_summary = analyzer.analyze_segments()
+    print("\n--- Customer Segment Summary ---")
+    print(segment_summary)
 
-    print("\n📊 RFM Segment Analysis:")
-    print(segment_analysis)
+    # Step 5: Save detailed results
+    analyzer.save_results("outputs/rfm_results.csv")
+    print("\nRFM results saved to 'outputs/rfm_results.csv'.")
 
-    recommender = Recommender()
-    recommendations = recommender.get_recommendations(segment_analysis.index)
+    # Save RFM results to DB
+    save_csv_to_db("outputs/rfm_results.csv", table_name="RFMResults")
 
-    print("\n💡 Marketing Recommendations:")
-    for rec in recommendations:
-        print(f"- {rec}")
+    #-----------------------------------------------------------------------------
 
-    # ------------------------------------------------------------------------
+    survival_analyzer = SurvivalAnalyzer()
 
-    # Survival Analysis
-    survival_generator = SurvivalDataGenerator()
-    customers = survival_generator.generate_customers()
-    cards = survival_generator.generate_cards()
-    transactions = survival_generator.generate_transactions()
-    survival_data = survival_generator.prepare_survival_data()
+    survival_analyzer.fit_cox_model()
+    survival_analyzer.fit_weibull_model()
 
-    # Survival Analysis
-    analyzer = SurvivalAnalyzer(survival_data)
+    survival_analyzer.print_model_summaries()
+    survival_analyzer.save_model_summaries()
 
-    # Fit and save Kaplan-Meier plot
-    analyzer.fit_kaplan_meier()
-    analyzer.save_kaplan_meier_plot(filename='outputs/kaplan_meier_curve.png')
-
-    # Fit Cox model
-    analyzer.fit_cox_model()
-    analyzer.print_cox_summary()
-
-    # Fit additional models
-    analyzer.fit_additional_models()
-
-    # Save all model summaries into a CSV
-    analyzer.save_model_summaries()
-
+    survival_analyzer.plot_weibull_survival_function()
+    survival_analyzer.plot_custom_profiles()
 
 
 if __name__ == "__main__":

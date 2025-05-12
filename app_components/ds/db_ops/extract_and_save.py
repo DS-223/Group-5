@@ -10,7 +10,7 @@ if not DATABASE_URL:
 # Create SQLAlchemy engine
 engine = create_engine(DATABASE_URL)
 
-def extract_transaction_data(csv_path: str = "customer_transactions.csv") -> None:
+def extract_transaction_data(csv_path: str = "outputs/customer_transactions.csv") -> None:
     """
     Extracts transaction, customer, and date data from the database,
     joins them, and saves to a CSV for RFM analysis.
@@ -36,50 +36,51 @@ def extract_transaction_data(csv_path: str = "customer_transactions.csv") -> Non
         raise ValueError("No data found in the query. Check the DB content.")
 
     df.to_csv(csv_path, index=False, encoding='utf-8-sig')
-    print(f"✅ Data successfully saved to '{csv_path}'")
+    print(f"Data successfully saved to '{csv_path}'")
 
-def extract_survival_data(csv_path: str = "survival_data.csv") -> None:
+def extract_survival_data(csv_path: str = "outputs/survival_data.csv") -> None:
     """
     Extracts survival analysis data from the database,
     calculates duration and event, and saves to a CSV file.
     """
     query = """
-        WITH last_txn AS (
+            WITH last_txn AS (
+                SELECT 
+                    dc."CustomerCardCode",
+                    MAX(dd."Date") AS "LastTransactionDate"
+                FROM "FactTransaction" ft
+                JOIN "DimDate" dd ON ft."TransactionDateKey" = dd."DateKey"
+                JOIN "DimCustomer" dc ON ft."CustomerKey" = dc."CustomerKey"
+                GROUP BY dc."CustomerCardCode"
+            ),
+            survival_data AS (
+                SELECT 
+                    dc."CustomerCardCode",
+                    dc."Name",
+                    dc."RegistrationDate",
+                    dc."BirthDate",
+                    dc."Gender",
+                    COALESCE(lt."LastTransactionDate", CURRENT_DATE) AS "LastTransactionDate",
+                    GREATEST(DATE_PART('day', COALESCE(lt."LastTransactionDate", CURRENT_DATE) - dc."RegistrationDate"), 1) AS "duration",
+                    CASE 
+                        WHEN lt."LastTransactionDate" IS NULL THEN 1
+                        WHEN CURRENT_DATE - lt."LastTransactionDate" > INTERVAL '180 days' THEN 1
+                        ELSE 0
+                    END AS "event",
+                    FLOOR(DATE_PART('year', AGE(CURRENT_DATE, dc."BirthDate"))) AS "Age"
+                FROM "DimCustomer" dc
+                LEFT JOIN last_txn lt ON dc."CustomerCardCode" = lt."CustomerCardCode"
+            )
             SELECT 
-                ft."CustomerCardCode",
-                MAX(dd."Date") AS "LastTransactionDate"
-            FROM "FactTransaction" ft
-            JOIN "DimDate" dd ON ft."TransactionDateKey" = dd."DateKey"
-            GROUP BY ft."CustomerCardCode"
-        ),
-        survival_data AS (
-            SELECT 
-                dc."CustomerCardCode",
-                dc."Name",
-                dc."RegistrationDate",
-                dc."BirthDate",
-                dc."Gender",
-                COALESCE(lt."LastTransactionDate", CURRENT_DATE) AS "LastTransactionDate",
-                GREATEST(DATE_PART('day', COALESCE(lt."LastTransactionDate", CURRENT_DATE) - dc."RegistrationDate"), 1) AS "duration",
-                CASE 
-                    WHEN lt."LastTransactionDate" IS NULL THEN 1
-                    WHEN CURRENT_DATE - lt."LastTransactionDate" > INTERVAL '180 days' THEN 1
-                    ELSE 0
-                END AS "event",
-                FLOOR(DATE_PART('year', AGE(CURRENT_DATE, dc."BirthDate"))) AS "Age"
-            FROM "DimCustomer" dc
-            LEFT JOIN last_txn lt ON dc."CustomerCardCode" = lt."CustomerCardCode"
-        )
-        SELECT 
-            "CustomerCardCode",
-            "Name",
-            "RegistrationDate",
-            "BirthDate",
-            "Gender",
-            "Age",
-            "duration",
-            "event"
-        FROM survival_data;
+                "CustomerCardCode",
+                "Name",
+                "RegistrationDate",
+                "BirthDate",
+                "Gender",
+                "Age",
+                "duration",
+                "event"
+            FROM survival_data;
     """
     try:
         df = pd.read_sql(query, engine)
@@ -93,4 +94,4 @@ def extract_survival_data(csv_path: str = "survival_data.csv") -> None:
     df['Gender'] = df['Gender'].map({'Male': 0, 'Female': 1})
 
     df.to_csv(csv_path, index=False, encoding='utf-8-sig')
-    print(f"✅ Survival data successfully saved to '{csv_path}'")
+    print(f"Survival data successfully saved to '{csv_path}'")

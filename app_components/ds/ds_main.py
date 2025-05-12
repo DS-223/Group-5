@@ -1,6 +1,7 @@
 from db_ops.extract_and_save import extract_transaction_data
 from db_ops.db_writer import save_csv_to_db
 from utils.rfm_analyzer import RFMAnalyzer
+from utils.survival_analyzer import SurvivalAnalyzer
 
 def main():
     # Step 1: Extract data from DB and save to CSV
@@ -24,7 +25,23 @@ def main():
     print("\nRFM results saved to 'outputs/rfm_results.csv'.")
 
     # Save RFM results to DB
-    save_csv_to_db("outputs/rfm_results.csv", table_name="RFMResults")
+    save_csv_to_db("example_data/rfm_results.csv", table_name="RFMResults")
+
+    #-----------------------------------------------------------------------------
+
+    survival_analyzer = SurvivalAnalyzer()
+
+    # Fit non-personalized Kaplan-Meier
+    survival_analyzer.fit_non_personalized_model()
+    survival_analyzer.save_kaplan_meier_plot()
+
+    # Fit personalized Cox model
+    survival_analyzer.fit_personalized_model()
+    survival_analyzer.print_cox_summary()
+
+    # Save both model summaries
+    survival_analyzer.save_model_summaries()
+
 
 if __name__ == "__main__":
     main()

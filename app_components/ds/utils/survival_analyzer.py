@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import os
 
-from extract_and_save import extract_survival_data
+from db_ops.extract_and_save import extract_survival_data
 from lifelines import CoxPHFitter, WeibullAFTFitter
 
 
@@ -17,7 +17,7 @@ class SurvivalAnalyzer:
     and both model fitting and visualization capabilities are provided.
     """
 
-    def __init__(self, csv_path='survival_data.csv'):
+    def __init__(self, csv_path='outputs/survival_data.csv'):
         """
         Initializes the SurvivalAnalyzer by extracting data and loading it into memory.
 
@@ -26,24 +26,29 @@ class SurvivalAnalyzer:
         """
         extract_survival_data(csv_path)
         self.data = pd.read_csv(csv_path)
+        print("Missing values per column:")
+        print(self.data[['duration', 'event', 'Age', 'Gender']].isnull().sum())
+        self.data = self.data.dropna(subset=['duration', 'event', 'Age', 'Gender'])
         self.models = {}
 
     def fit_cox_model(self):
         """
         Fits a Cox Proportional Hazards model using duration, event, age, and gender.
         """
+        self.data = self.data.dropna(subset=['duration', 'event', 'Age', 'Gender'])
         self.cph = CoxPHFitter()
         self.cph.fit(self.data[['duration', 'event', 'Age', 'Gender']],
-                     duration_col='duration', event_col='event')
+                 duration_col='duration', event_col='event')
         self.models['CoxPH'] = self.cph
 
     def fit_weibull_model(self):
         """
         Fits a Weibull AFT (Accelerated Failure Time) model using duration, event, age, and gender.
         """
+        self.data = self.data.dropna(subset=['duration', 'event', 'Age', 'Gender'])
         self.weibull = WeibullAFTFitter()
         self.weibull.fit(self.data[['duration', 'event', 'Age', 'Gender']],
-                         duration_col='duration', event_col='event')
+                     duration_col='duration', event_col='event')
         self.models['WeibullAFT'] = self.weibull
 
     def save_model_summaries(self, output_folder='outputs'):
@@ -69,7 +74,7 @@ class SurvivalAnalyzer:
         print("\n📄 Weibull AFT Summary:")
         self.weibull.print_summary()
 
-    def plot_weibull_survival_function(self, filename='weibull_survival_curve.png'):
+    def plot_weibull_survival_function(self,filename='outputs/weibull_survival_curve.png'):
         """
         Plots the Weibull survival function using the median values of covariates 
         and saves it to a file.
@@ -87,7 +92,7 @@ class SurvivalAnalyzer:
         plt.savefig(filename, bbox_inches='tight')
         plt.close()
 
-    def plot_custom_profiles(self, filename='weibull_custom_profiles.png'):
+    def plot_custom_profiles(self, filename='outputs/weibull_custom_profiles.png'):
         """
         Plots Weibull survival functions for two custom customer profiles 
         (e.g., young male and old female) and saves the plot.

@@ -34,9 +34,34 @@ def has_shared_strings(file_path: str) -> bool:
         return False
 
 def clean_table_name(name: str) -> str:
+    """
+    Convert a string into a lowercase, underscore-separated table name by replacing non-alphanumeric characters.
+    """
+
     return re.sub(r'\W+', '_', name).lower()
 
 def load_xlsx_to_table(table_name: str, xlsx_path: str) -> bool:
+    """
+    Loads data from an Excel (.xlsx) file into a database table.
+    This function reads data from the specified Excel file and attempts to load it
+    into a database table with the given name. If the table already exists or the
+    Excel file is empty, the operation is skipped.
+    Args:
+        table_name (str): The name of the database table to load data into.
+        xlsx_path (str): The file path to the Excel (.xlsx) file.
+    Returns:
+        bool: True if the data was successfully loaded into the table, False otherwise.
+    Raises:
+        Exception: Logs an error message if any exception occurs during the process.
+    Notes:
+        - The function uses the `openpyxl` engine to read the Excel file.
+        - If the table already exists in the database, the function logs a warning
+          and skips the operation.
+        - If the Excel file is empty, the function logs a warning and skips the operation.
+        - The data is written to the database using the `replace` mode, which overwrites
+          any existing data in the table.
+    """
+
     inspector = inspect(engine)
     try:
         df = pd.read_excel(xlsx_path, engine='openpyxl')
@@ -54,6 +79,33 @@ def load_xlsx_to_table(table_name: str, xlsx_path: str) -> bool:
         return False
 
 def load_store_dim_table():
+    """
+    Loads data from an Excel file into a database table named 'DimStore'.
+    This function reads store data from an Excel file, processes it, and loads it into the 
+    'DimStore' table in the database. If the table already exists and contains data, the 
+    function skips reloading the data. If the table exists but is empty, it appends the data. 
+    If the table does not exist, it creates the table and loads the data.
+    Steps:
+    1. Reads the Excel file 'data/Stores.xlsx' into a pandas DataFrame.
+    2. Renames the columns of the DataFrame to match the database schema.
+    3. Checks if the 'DimStore' table exists in the database using SQLAlchemy's inspector.
+    4. If the table exists and contains data, logs a warning and skips loading.
+    5. If the table exists but is empty, appends the data and logs the operation.
+    6. If the table does not exist, creates the table and loads the data.
+    Logging:
+    - Logs a warning if the table already exists and contains data.
+    - Logs an info message when data is successfully loaded.
+    Dependencies:
+    - pandas (pd)
+    - sqlalchemy (inspect, engine)
+    - logger (for logging messages)
+    Raises:
+    - Any exceptions raised by pandas or SQLAlchemy during file reading or database operations.
+    Note:
+    Ensure that the database engine (`engine`) and logger (`logger`) are properly configured 
+    before calling this function.
+    """
+
     store_file = "data/Stores.xlsx"
     df = pd.read_excel(store_file)
 
@@ -80,6 +132,28 @@ def load_store_dim_table():
         logger.info(f"DimStore did not exist. Loaded {len(df)} rows.")
         
 def run():
+    """
+    Executes the ETL process to load data from XLSX files into database tables.
+    This function performs the following steps:
+    1. Searches for all XLSX files in the "data" folder.
+    2. Logs the number of files found.
+    3. Loads the Dimstore table from a specific "Stores.xlsx" file.
+    4. Iterates through the found XLSX files, cleans their names, and determines
+       whether they are valid for processing.
+    5. Skips invalid files or files with specific names (e.g., "stores").
+    6. Loads valid XLSX files into their respective database tables.
+    7. Logs the number of successfully loaded tables.
+    Logging and warnings are provided for invalid files or skipped files.
+    Note:
+        - The function assumes the presence of helper functions such as:
+          `load_store_dim_table`, `clean_table_name`, `has_shared_strings`,
+          and `load_xlsx_to_table`.
+        - The logger object is used for logging messages.
+    Raises:
+        Any exceptions raised by the helper functions are not handled here
+        and will propagate to the caller.
+    """
+
     folder_path = "data/*.xlsx"
     files = glob.glob(folder_path)
     logger.info(f"Found {len(files)} XLSX files.")

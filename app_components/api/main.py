@@ -279,7 +279,9 @@ def get_segment_distribution_female(db: Session = Depends(get_db)):
 
     return JSONResponse(content={segment: count for segment, count in results})
 
-
+#------------------------------------------------------------------------------------------------------
+#-----------------------------------Sending Emails-----------------------------------------------------
+#------------------------------------------------------------------------------------------------------
 @app.get("/analytics/segments_for_button", response_model=list[str])
 def list_segments(db: Session = Depends(get_db)):
     rows = db.query(RFMResults.segment).distinct().all()

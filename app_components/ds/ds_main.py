@@ -31,16 +31,14 @@ def main():
 
     survival_analyzer = SurvivalAnalyzer()
 
-    # Fit non-personalized Kaplan-Meier
-    survival_analyzer.fit_non_personalized_model()
-    survival_analyzer.save_kaplan_meier_plot()
+    survival_analyzer.fit_cox_model()
+    survival_analyzer.fit_weibull_model()
 
-    # Fit personalized Cox model
-    survival_analyzer.fit_personalized_model()
-    survival_analyzer.print_cox_summary()
-
-    # Save both model summaries
+    survival_analyzer.print_model_summaries()
     survival_analyzer.save_model_summaries()
+
+    survival_analyzer.plot_weibull_survival_function()
+    survival_analyzer.plot_custom_profiles()
 
 
 if __name__ == "__main__":

@@ -5,10 +5,10 @@ from utils.survival_analyzer import SurvivalAnalyzer
 
 def main():
     # Step 1: Extract data from DB and save to CSV
-    extract_transaction_data(csv_path="customer_transactions.csv")
+    extract_transaction_data(csv_path="outputs/customer_transactions.csv")
 
     # Step 2: Initialize RFM Analyzer
-    analyzer = RFMAnalyzer("customer_transactions.csv")
+    analyzer = RFMAnalyzer("outputs/customer_transactions.csv")
 
     # Step 3: Run full RFM analysis
     analyzer.calculate_rfm()
@@ -25,7 +25,7 @@ def main():
     print("\nRFM results saved to 'outputs/rfm_results.csv'.")
 
     # Save RFM results to DB
-    save_csv_to_db("example_data/rfm_results.csv", table_name="RFMResults")
+    save_csv_to_db("outputs/rfm_results.csv", table_name="RFMResults")
 
     #-----------------------------------------------------------------------------
 

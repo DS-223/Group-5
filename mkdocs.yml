@@ -1,4 +1,19 @@
 site_name: Loyalytics
+theme:
+  name: material
+  palette:
+    scheme: default
+    toggle:
+      icon: material/toggle-switch
+      name: Switch to dark mode
+      pressed_name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.expand
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+
 nav:
   - Home: index.md
   - API: api.md

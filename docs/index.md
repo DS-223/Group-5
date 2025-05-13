@@ -39,6 +39,8 @@ We implemented an end-to-end analytics platform that:
 
 ## 📁 Documentation Map
 
+- [`api.md`](api.md) – RESTful API endpoints for predictions and search
+- [`app.md`](app.md) - StreamLit, Visualizations, and Email Campaign
 - [`database.md`](database.md) – Database schema, ORM models, and raw table loading
 - [`model.md`](model.md) – ML logic, RFM pipeline, and survival analysis
-- [`api.md`](api.md) – RESTful API endpoints for predictions and search
+

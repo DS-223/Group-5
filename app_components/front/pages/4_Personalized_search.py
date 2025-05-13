@@ -4,15 +4,20 @@ import requests
 from dotenv import load_dotenv
 import os
 
+# Set the page title and layout
 st.set_page_config(page_title="Personalized Search", layout="wide")
 
 st.title("Personalized Customer Search")
 
+# Load environment variables from the .env file
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 API_CUSTOMER_ENDPOINT = os.getenv("API_CUSTOMER_ENDPOINT")
+
+# Check if the API endpoint is provided in the .env file
 if not API_CUSTOMER_ENDPOINT:
     raise ValueError("API_CUSTOMER_ENDPOINT is not set in .env")
 
+# Function to fetch customer data by ID using the API
 def get_customer_by_id_api(customer_id: int) -> pd.DataFrame:
     """
     Fetch customer data by ID using a GET request to the provided API endpoint.
@@ -36,8 +41,10 @@ def get_customer_by_id_api(customer_id: int) -> pd.DataFrame:
         st.error(f"API error: {e}")
         return pd.DataFrame()
 
+# Create an input field for customer ID
 cust_id_input = st.text_input("Enter Customer ID (e.g., 1)")
 
+# Fetch and display customer data based on the input
 if cust_id_input:
     try:
         cust_id = int(cust_id_input)
@@ -50,6 +57,7 @@ if cust_id_input:
     except ValueError:
         st.error("Please enter a valid numeric Customer ID.")
 
+# Apply custom styles to the page using markdown
 st.markdown("""
     <style>
     .stApp {

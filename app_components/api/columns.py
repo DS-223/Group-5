@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, Date, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, Date, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
 from database import Base
 
@@ -79,3 +79,16 @@ class RFMResults(Base):
     gender = Column(String(10))
     date_of_birth = Column(Date)
     age = Column(Integer)
+
+
+class SurvivalData(Base):
+    __tablename__ = "SurvivalData"
+    
+    CustomerCardCode = Column(BigInteger, primary_key=True)
+    Name = Column(String)
+    RegistrationDate = Column(String)
+    BirthDate = Column(String)
+    Gender = Column(Float)
+    Age = Column(Float)
+    duration = Column(Float)
+    event = Column(BigInteger)

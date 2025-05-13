@@ -4,15 +4,18 @@ import requests
 from dotenv import load_dotenv
 import os
 
+# Set page config
 st.set_page_config(page_title="Transaction Search", layout="wide")
 st.title("Transaction Search")
 
+# Load environment variable
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 API_TRANSACTIONS_ENDPOINT = os.getenv("API_TRANSACTIONS_ENDPOINT")
 
 if not API_TRANSACTIONS_ENDPOINT:
     raise ValueError("API_TRANSACTIONS_ENDPOINT is not set in .env")
 
+# API call function
 def get_transactions_by_customer_id(customer_id: int):
     """
     Fetch transaction data for a specific customer by ID from the API.
@@ -36,8 +39,10 @@ def get_transactions_by_customer_id(customer_id: int):
         st.error(f"API error: {e}")
         return pd.DataFrame()
 
+# UI input
 cust_id_input = st.text_input("Enter Customer ID to view their transactions")
 
+# Trigger search
 if cust_id_input:
     try:
         cust_id = int(cust_id_input)
@@ -50,6 +55,7 @@ if cust_id_input:
     except ValueError:
         st.error("Please enter a valid numeric Customer ID.")
 
+# Custom styling
 st.markdown("""
     <style>
     .stApp {

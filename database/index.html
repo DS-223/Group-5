@@ -84,12 +84,169 @@
     
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#database-documentation" class="nav-link">Database Documentation</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#star-schema-design" class="nav-link">📐 Star Schema Design</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#orm-models" class="nav-link">⚙️ ORM Models</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#business-logic-layer" class="nav-link">🧠 Business Logic Layer</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#etl-integration" class="nav-link">🔁 ETL Integration</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#data-validations" class="nav-link">🧪 Data Validations</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#dependencies" class="nav-link">🛠️ Dependencies</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#configuration" class="nav-link">🔐 Configuration</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#related-files" class="nav-link">📂 Related Files</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
         </ul>
     </div>
 </div></div>
                     <div class="col-md-9" role="main">
 
-</div>
+<h1 id="database-documentation">Database Documentation</h1>
+<p>This service manages the <strong>PostgreSQL database</strong> for the ETL pipeline and analytics platform. It uses SQLAlchemy ORM to define and interact with the star schema that powers the reporting and machine learning workflows.</p>
+<hr />
+<h2 id="star-schema-design">📐 Star Schema Design</h2>
+<p>The schema follows a classic star structure with the following tables:</p>
+<ul>
+<li><code>DimDate</code>: Stores date-related attributes.</li>
+<li><code>DimCustomer</code>: Contains customer metadata (e.g., name, birthdate, gender, email).</li>
+<li><code>DimStore</code>: Information about store branches including location and size.</li>
+<li><code>FactTransaction</code>: The central fact table that records every customer transaction.</li>
+</ul>
+<p>Each <code>FactTransaction</code> entry references:</p>
+<ul>
+<li>a customer (<code>CustomerKey</code> from <code>DimCustomer</code>),</li>
+<li>a store (<code>StoreKey</code> from <code>DimStore</code>),</li>
+<li>and a transaction date (<code>DateKey</code> from <code>DimDate</code>).</li>
+</ul>
+<hr />
+<h2 id="orm-models">⚙️ ORM Models</h2>
+<p>The ORM classes in <code>db/star_schema.py</code> define the schema as Python classes.</p>
+<ul>
+<li>All models inherit from a common <code>Base</code> defined in <code>db_conf.py</code>.</li>
+<li>The <code>create_tables()</code> function initializes the schema in the target PostgreSQL database.</li>
+</ul>
+<pre><code class="language-python">Base.metadata.create_all(bind=engine)
+</code></pre>
+<hr />
+<h2 id="business-logic-layer">🧠 Business Logic Layer</h2>
+<p>The class <code>TransactionDatabase</code> in <code>CRUD_func.py</code> wraps direct database interactions such as:</p>
+<ul>
+<li>Inserting customers, dates, and transactions</li>
+<li>Updating or deleting records</li>
+<li>Fetching data for reporting or debugging</li>
+</ul>
+<hr />
+<h2 id="etl-integration">🔁 ETL Integration</h2>
+<p>The ETL pipeline loads data into the star schema in multiple phases:</p>
+<ol>
+<li><strong>Extract &amp; Load Raw XLSX</strong>:</li>
+<li>Excel files are ingested into raw tables using Pandas and <code>to_sql()</code>.</li>
+<li>
+<p>Raw file names are cleaned into table names.</p>
+</li>
+<li>
+<p><strong>Transform</strong>:</p>
+</li>
+<li>Data is cleaned and standardized (e.g., phone/email formatting, gender unification).</li>
+<li>
+<p>Invalid records are dropped.</p>
+</li>
+<li>
+<p><strong>Load to Star Schema</strong>:</p>
+</li>
+<li>Dimension tables are filled using <code>load_dimcustomer_table()</code> and <code>load_dimdate_table()</code>.</li>
+<li>Transaction data is processed and inserted using <code>load_facttransaction_table()</code>.</li>
+</ol>
+<hr />
+<h2 id="data-validations">🧪 Data Validations</h2>
+<ul>
+<li>Dates must follow <code>YYYY-MM-DD</code> and be logically consistent.</li>
+<li>CustomerCardCodes are filtered to 13-character strings.</li>
+<li>Phone and address fields are validated for structure and length.</li>
+<li>Store names are mapped to known clean values using <code>STORE_NAME_MAPPING</code>.</li>
+</ul>
+<hr />
+<h2 id="dependencies">🛠️ Dependencies</h2>
+<p>The ETL database logic requires:</p>
+<ul>
+<li><code>SQLAlchemy</code></li>
+<li><code>psycopg2-binary</code></li>
+<li><code>pandas</code></li>
+<li><code>loguru</code></li>
+<li><code>dotenv</code></li>
+</ul>
+<hr />
+<h2 id="configuration">🔐 Configuration</h2>
+<p>Database credentials are loaded from a <code>.env</code> file:</p>
+<pre><code class="language-env">DATABASE_URL=postgresql+psycopg2://postgres:postgres@db:5432/maindb
+DB_USER=postgres
+DB_HOST=postgres-db
+DB_PASSWORD=postgres
+DB_NAME=maindb
+PGADMIN_EMAIL=admin@admin.com 
+PGADMIN_PASSWORD=admin
+</code></pre>
+<hr />
+<h2 id="related-files">📂 Related Files</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/db</code></td>
+<td>SQLAlchemy Setup: Engine, Base, Session, General Database Configuration</td>
+</tr>
+<tr>
+<td><code>CRUD_func.py</code></td>
+<td>Class wrapping SQL queries</td>
+</tr>
+<tr>
+<td><code>extract_load_raw.py</code></td>
+<td>Extracts all XLSX files, does validation and dumps them in the DB</td>
+</tr>
+<tr>
+<td><code>transform.py</code></td>
+<td>Takes raw tables and does transformation, cleaning and validation</td>
+</tr>
+<tr>
+<td><code>load.py</code></td>
+<td>Takes clean tables and sequentially loads into DB, row-by-row (FactTransaction, DimCustomer) or by batch</td>
+</tr>
+<tr>
+<td><code>main.py</code></td>
+<td>Entry point that orchestrates ETL and signals completion</td>
+</tr>
+</tbody>
+</table></div>
             </div>
         </div>
 

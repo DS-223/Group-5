@@ -84,12 +84,154 @@
     
     <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
         <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="1"><a href="#model-service" class="nav-link">Model Service</a>
+              <ul class="nav flex-column">
+            <li class="nav-item" data-bs-level="2"><a href="#architecture-overview" class="nav-link">🧱 Architecture Overview</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#input-output-files" class="nav-link">📦 Input &amp; Output Files</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#components" class="nav-link">🔍 Components</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#output-tables-in-database" class="nav-link">🧪 Output Tables in Database</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            <li class="nav-item" data-bs-level="2"><a href="#docker-execution" class="nav-link">🐳 Docker Execution</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+              </ul>
+            </li>
         </ul>
     </div>
 </div></div>
                     <div class="col-md-9" role="main">
 
-</div>
+<h1 id="model-service">Model Service</h1>
+<p>The <code>ds</code> service is responsible for performing advanced data analytics, including customer segmentation (via RFM analysis) and customer retention modeling (via survival analysis). It uses preprocessed transaction and customer data from the ETL pipeline and produces insights that are stored in the database and visualized in the frontend.</p>
+<hr />
+<h2 id="architecture-overview">🧱 Architecture Overview</h2>
+<p>The model pipeline is built with:</p>
+<ul>
+<li><strong>SQLAlchemy &amp; pandas</strong>: For database interaction and data manipulation</li>
+<li><strong>scikit-learn</strong>: For segmentation (KNN for unknown segment classification)</li>
+<li><strong>lifelines</strong>: For survival analysis (Cox Proportional Hazards, Weibull AFT)</li>
+<li><strong>matplotlib</strong>: For visualization</li>
+<li><strong>Python + Docker</strong>: For containerized execution</li>
+</ul>
+<hr />
+<h2 id="input-output-files">📦 Input &amp; Output Files</h2>
+<table>
+<thead>
+<tr>
+<th>File Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>outputs/customer_transactions.csv</code></td>
+<td>Extracted customer transaction data</td>
+</tr>
+<tr>
+<td><code>outputs/rfm_results.csv</code></td>
+<td>Output of the RFM analysis</td>
+</tr>
+<tr>
+<td><code>outputs/survival_data.csv</code></td>
+<td>Prepared survival data</td>
+</tr>
+<tr>
+<td><code>outputs/*.png</code></td>
+<td>Survival plots</td>
+</tr>
+<tr>
+<td><code>outputs/*.csv</code></td>
+<td>Model summaries</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="components">🔍 Components</h2>
+<h3 id="1-data-extraction">1. <strong>Data Extraction</strong></h3>
+<p>Module: <code>db_ops/extract_and_save.py</code></p>
+<ul>
+<li><strong><code>extract_transaction_data()</code></strong>: Joins FactTransaction, DimCustomer, and DimDate tables for RFM analysis.</li>
+<li><strong><code>extract_survival_data()</code></strong>: Constructs a survival dataset with event and duration variables.</li>
+</ul>
+<hr />
+<h3 id="2-rfm-analysis">2. <strong>RFM Analysis</strong></h3>
+<p>Module: <code>utils/rfm_analyzer.py</code></p>
+<ul>
+<li><strong><code>calculate_rfm()</code></strong>: Computes recency, frequency, and monetary values per customer.</li>
+<li><strong><code>score_rfm()</code></strong>: Assigns 1–5 scores for each metric.</li>
+<li><strong><code>segment_customers()</code></strong>: Classifies customers into segments such as:</li>
+<li>Champions</li>
+<li>Loyal Customers</li>
+<li>Potential Loyalists</li>
+<li>Big Spenders</li>
+<li>Leaving Customers</li>
+<li><strong><code>classify_unknown_segments()</code></strong>: Uses KNN classifier to assign a segment to previously unclassified customers.</li>
+<li><strong><code>analyze_segments()</code></strong>: Produces aggregated statistics per segment.</li>
+<li><strong><code>save_results()</code></strong>: Saves the detailed results to CSV.</li>
+</ul>
+<hr />
+<h3 id="3-survival-analysis">3. <strong>Survival Analysis</strong></h3>
+<p>Module: <code>utils/survival_analyzer.py</code></p>
+<ul>
+<li>Uses <code>lifelines</code> to fit:</li>
+<li><strong>Cox Proportional Hazards Model</strong></li>
+<li><strong>Weibull AFT Model</strong></li>
+<li>Key Methods:</li>
+<li><strong><code>fit_cox_model()</code></strong></li>
+<li><strong><code>fit_weibull_model()</code></strong></li>
+<li><strong><code>print_model_summaries()</code></strong></li>
+<li><strong><code>save_model_summaries()</code></strong></li>
+<li><strong><code>plot_weibull_survival_function()</code></strong></li>
+<li><strong><code>plot_custom_profiles()</code></strong></li>
+</ul>
+<hr />
+<h2 id="output-tables-in-database">🧪 Output Tables in Database</h2>
+<table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RFMResults</code></td>
+<td>RFM scores, segments, and demographic details</td>
+</tr>
+<tr>
+<td><code>SurvivalData</code></td>
+<td>Raw data used for survival modeling</td>
+</tr>
+<tr>
+<td><code>CoxPHSummary</code></td>
+<td>Summary of Cox PH model coefficients</td>
+</tr>
+<tr>
+<td><code>WeibullAFTSummary</code></td>
+<td>Summary of Weibull AFT model coefficients</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="docker-execution">🐳 Docker Execution</h2>
+<p>The <code>ds</code> service uses a <code>wait-for-etl.sh</code> script to ensure ETL has completed before running. It then launches:</p>
+<pre><code>python ds_main.py
+</code></pre>
+<p>Main entrypoint script: <code>ds_main.py</code>, which calls the full analytics pipeline sequentially.</p>
+<hr /></div>
             </div>
         </div>
 

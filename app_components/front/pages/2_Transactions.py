@@ -1,7 +1,15 @@
 import streamlit as st
+import requests
+import pandas as pd
+import plotly.express as px
+from dotenv import load_dotenv
+import os
 
 st.set_page_config(page_title="Transaction Analysis", layout="wide")
 st.title("Transaction Analysis")
+
+load_dotenv()
+API_ENDPOINT = os.getenv("API_TRANSACTIONS_BYSTORE_ENDPOINT")
 
 if 'mode' not in st.session_state:
     st.session_state['mode'] = 'Light Mode'
@@ -32,3 +40,79 @@ else:
         header[data-testid="stHeader"] {background: none;}
         </style>
     """, unsafe_allow_html=True)
+
+with st.sidebar:
+    toggle = st.button("Toggle Theme")
+    if toggle:
+        st.session_state['mode'] = 'Dark Mode' if mode == 'Light Mode' else 'Light Mode'
+        st.experimental_rerun()
+
+st.subheader("Total Transaction Amount by Store")
+
+if API_ENDPOINT:
+    try:
+        response = requests.get(API_ENDPOINT)
+        response.raise_for_status()
+        data = response.json()
+
+        df = pd.DataFrame(data)
+
+        if df.empty:
+            st.warning("No transaction data found.")
+        else:
+            df = df.sort_values("total_amount", ascending=False)
+
+            fig = px.bar(
+                df,
+                x="store",
+                y="total_amount",
+                title="Transaction Amounts by Store",
+                labels={"store": "Store", "total_amount": "Total Amount"},
+                color="total_amount",
+                color_continuous_scale="Tealgrn"
+            )
+            fig.update_layout(xaxis_tickangle=-45)
+            st.plotly_chart(fig, use_container_width=True)
+
+    except requests.exceptions.RequestException as e:
+        st.error(f"Failed to fetch data: {e}")
+else:
+    st.error("API endpoint not set in .env file. Please set `API_TRANSACTIONS_BYSTORE_ENDPOINT`.")
+
+
+st.subheader("Monthly Transaction Trend by Store")
+
+API_MONTHLY_ENDPOINT = os.getenv("API_TRANSACTIONS_MONTH_ENDPOINT")
+
+if API_MONTHLY_ENDPOINT:
+    try:
+        response = requests.get(API_MONTHLY_ENDPOINT)
+        response.raise_for_status()
+        monthly_data = response.json()
+
+        # Convert to DataFrame
+        monthly_df = pd.DataFrame(monthly_data)
+
+        if monthly_df.empty:
+            st.warning("No monthly transaction data found.")
+        else:
+            # Ensure correct types
+            monthly_df["month"] = pd.to_datetime(monthly_df["month"], format="%b %Y")
+            monthly_df.sort_values("month", inplace=True)
+
+            # Line chart with one line per store
+            fig = px.line(
+                monthly_df,
+                x="month",
+                y="total_amount",
+                color="store",
+                title="Monthly Transaction Trends by Store",
+                labels={"month": "Month", "total_amount": "Total Amount", "store": "Store"},
+            )
+            fig.update_layout(xaxis=dict(tickformat="%b\n%Y"), legend_title="Store")
+            st.plotly_chart(fig, use_container_width=True)
+
+    except requests.exceptions.RequestException as e:
+        st.error(f"Failed to fetch monthly data: {e}")
+else:
+    st.error("Monthly API endpoint not set in .env file.")

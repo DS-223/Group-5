@@ -29,7 +29,7 @@ RFM Matrix Overview
 /analytics/rfm-matrix - Returns data for matrix visualizations including segment size, avg. monetary value, and scores
 
 Customer Survival Analysis
-/analytics/survival-curve - Generates Kaplan-Meier survival curve using SurvivalData, modeling customer churn over time
+/analytics/survival-curve - Generates Weibull survival curve using SurvivalData, modeling customer churn over time
 
 Scorecards with filtering 
 /analytics/summary-scorecards - Returns data for scorecards
@@ -66,7 +66,7 @@ from schema import (CustomerCreate,
                     StoreMonthlyTransaction, 
                     RFMSegmentBlock, 
                     SurvivalCurvePoint, 
-                    ScorecardMetric)
+                    ScorecardMetric,)
 from typing import List, Dict, Optional
 from sqlalchemy import func, cast, BigInteger
 from datetime import datetime
@@ -75,7 +75,7 @@ from fastapi.responses import JSONResponse
 import os
 from email_utils import EmailCampaignManager
 
-from lifelines import KaplanMeierFitter
+from lifelines import WeibullAFTFitter
 
 
 app = FastAPI(title="Customer Management API")
@@ -422,46 +422,55 @@ def rfm_matrix(db: Session = Depends(get_db)):
 
 
 #------------------------------------------------------------------------------------------------------
-#--------------------------------------------RFM Analysis----------------------------------------------
+#------------------------------------------Survival Analysis-------------------------------------------
 #------------------------------------------------------------------------------------------------------
 @app.get("/analytics/survival-curve", response_model=List[SurvivalCurvePoint])
 def get_survival_curve(db: Session = Depends(get_db)):
     """
-    Performs Kaplan-Meier survival analysis using duration and event columns.
-    Returns survival probabilities and confidence intervals over time.
+    Performs Weibull AFT survival analysis using duration, event, and covariates.
+    Returns predicted survival probabilities over time for the average customer.
     """
-    # Load duration and event from DB
-    data = db.query(SurvivalData.duration, SurvivalData.event).filter(
+
+    # Query the data
+    raw_data = db.query(
+        SurvivalData.duration,
+        SurvivalData.event,
+        SurvivalData.Age,
+        SurvivalData.Gender
+    ).filter(
         SurvivalData.duration.isnot(None),
-        SurvivalData.event.isnot(None)
+        SurvivalData.event.isnot(None),
+        SurvivalData.Age.isnot(None),
+        SurvivalData.Gender.isnot(None)
     ).all()
 
-    durations = [d[0] for d in data]
-    events = [d[1] for d in data]
-
-    if not durations or not events:
+    if not raw_data:
         raise HTTPException(status_code=404, detail="No survival data available.")
 
-    # Fit Kaplan-Meier estimator
-    kmf = KaplanMeierFitter()
-    kmf.fit(durations, event_observed=events)
+    # Load into DataFrame
+    df = pd.DataFrame(raw_data, columns=["duration", "event", "Age", "Gender"])
+    df["Gender"] = df["Gender"].astype(int)  # ensure numeric for model
 
-    # Build response
-    results = []
-    for t, s, l, u in zip(
-        kmf.survival_function_.index,
-        kmf.survival_function_["KM_estimate"],
-        kmf.confidence_interval_["KM_estimate_lower_0.95"],
-        kmf.confidence_interval_["KM_estimate_upper_0.95"]
-    ):
-        results.append(SurvivalCurvePoint(
+    # Fit the Weibull AFT model
+    aft = WeibullAFTFitter()
+    aft.fit(df, duration_col="duration", event_col="event")
+
+    # Predict survival for average individual
+    avg_profile = df.mean().to_frame().T
+    surv_df = aft.predict_survival_function(avg_profile)
+
+    # Build API response
+    response = [
+        SurvivalCurvePoint(
             time=float(t),
             survival_prob=float(s),
-            ci_lower=float(l),
-            ci_upper=float(u)
-        ))
+            ci_lower=None,
+            ci_upper=None
+        )
+        for t, s in zip(surv_df.index, surv_df.iloc[:, 0])
+    ]
 
-    return results
+    return response
 
 
 #------------------------------------------------------------------------------------------------------
@@ -550,3 +559,5 @@ def get_date_range(db: Session = Depends(get_db)):
         "min_date": min_date.strftime("%Y-%m-%d") if min_date else None,
         "max_date": max_date.strftime("%Y-%m-%d") if max_date else None
     }
+
+

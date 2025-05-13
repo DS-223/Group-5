@@ -41,12 +41,6 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-with st.sidebar:
-    toggle = st.button("Toggle Theme")
-    if toggle:
-        st.session_state['mode'] = 'Dark Mode' if mode == 'Light Mode' else 'Light Mode'
-        st.experimental_rerun()
-
 st.subheader("Total Transaction Amount by Store")
 
 if API_ENDPOINT:

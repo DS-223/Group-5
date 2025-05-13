@@ -99,7 +99,7 @@ if data:
     fig.update_layout(
         title="Survival Curve",  # Title of the plot
         title_font=dict(family="Segoe UI", size=16, color="white"),  # Title font settings
-        xaxis_title="Time",  # Label for x-axis
+        xaxis_title="Days",  # Label for x-axis
         yaxis_title="Survival Probability",  # Label for y-axis
         plot_bgcolor='#002424',  # Darker background for the plot area
         paper_bgcolor='#002424',  # Dark background for the whole figure

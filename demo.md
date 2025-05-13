@@ -2,7 +2,7 @@
 
 ## Product Overview
 
-**Product Name:** Bonus Card Holders Analysis
+**Product Name:** Loyalytics
 **Team Number:** Group 5 
 **Demo Date:** May 13, 2025  
 

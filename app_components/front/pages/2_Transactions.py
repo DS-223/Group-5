@@ -52,17 +52,22 @@ st.subheader("Total Transaction Amount by Store")
 
 if API_ENDPOINT:
     try:
+        # Fetch data from the specified API endpoint
         response = requests.get(API_ENDPOINT)
         response.raise_for_status()
         data = response.json()
 
+        # Parse data into a DataFrame
         df = pd.DataFrame(data)
 
+        # Check if the DataFrame is empty and display warning if so
         if df.empty:
             st.warning("No transaction data found.")
         else:
+            # Sort data by total_amount in descending order
             df = df.sort_values("total_amount", ascending=False)
 
+            # Create a bar chart using Plotly
             fig = px.bar(
                 df,
                 x="store",
@@ -73,6 +78,7 @@ if API_ENDPOINT:
                 color_continuous_scale=[[0, theme_teal], [1, "#007777"]]
             )
 
+            # Customize chart layout
             fig.update_layout(
                 plot_bgcolor="rgba(0,0,0,0)",
                 paper_bgcolor="rgba(0,0,0,0)",
@@ -83,11 +89,14 @@ if API_ENDPOINT:
                 title_font=dict(color=text_color)
             )
 
+            # Display the chart
             st.plotly_chart(fig, use_container_width=True)
 
     except requests.exceptions.RequestException as e:
+        # Handle any errors during API request
         st.error(f"Failed to fetch data: {e}")
 else:
+    # Error if the API endpoint is not set
     st.error("API endpoint not set in .env file. Please set `API_TRANSACTIONS_BYSTORE_ENDPOINT`.")
 
 # ------------------------------------------------
@@ -98,18 +107,23 @@ st.subheader("Monthly Transaction Trend by Store")
 
 if API_MONTHLY_ENDPOINT:
     try:
+        # Fetch monthly transaction data from the specified API endpoint
         response = requests.get(API_MONTHLY_ENDPOINT)
         response.raise_for_status()
         monthly_data = response.json()
 
+        # Parse the monthly data into a DataFrame
         monthly_df = pd.DataFrame(monthly_data)
 
+        # Check if the DataFrame is empty and display warning if so
         if monthly_df.empty:
             st.warning("No monthly transaction data found.")
         else:
+            # Convert 'month' column to datetime and sort the DataFrame by month
             monthly_df["month"] = pd.to_datetime(monthly_df["month"], format="%b %Y")
             monthly_df.sort_values("month", inplace=True)
 
+            # Create a line chart using Plotly
             fig = px.line(
                 monthly_df,
                 x="month",
@@ -119,6 +133,7 @@ if API_MONTHLY_ENDPOINT:
                 labels={"month": "Month", "total_amount": "Total Amount", "store": "Store"},
             )
 
+            # Customize chart layout
             fig.update_layout(
                 plot_bgcolor="rgba(0,0,0,0)",
                 paper_bgcolor="rgba(0,0,0,0)",
@@ -137,9 +152,12 @@ if API_MONTHLY_ENDPOINT:
                 legend_font=dict(color=text_color)
             )
 
+            # Display the chart
             st.plotly_chart(fig, use_container_width=True)
 
     except requests.exceptions.RequestException as e:
+        # Handle any errors during API request
         st.error(f"Failed to fetch monthly data: {e}")
 else:
+    # Error if the API monthly endpoint is not set
     st.error("Monthly API endpoint not set in .env file.")

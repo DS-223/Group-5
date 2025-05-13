@@ -328,27 +328,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#example-schema-customercreate" class="md-nav__link">
+  <a href="#scorecard-metrics" class="md-nav__link">
     <span class="md-ellipsis">
-      🛠️ Example Schema: CustomerCreate
+      🧮 Scorecard Metrics
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-config" class="md-nav__link">
+  <a href="#dashboard-dropdowns" class="md-nav__link">
     <span class="md-ellipsis">
-      🔐 Security &amp; Config
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      📂 Related Files
+      🧩 Dashboard Dropdowns
     </span>
   </a>
   
@@ -358,6 +349,15 @@
   <a href="#testing" class="md-nav__link">
     <span class="md-ellipsis">
       🧪 Testing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      📂 Related Files
     </span>
   </a>
   
@@ -527,27 +527,18 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#example-schema-customercreate" class="md-nav__link">
+  <a href="#scorecard-metrics" class="md-nav__link">
     <span class="md-ellipsis">
-      🛠️ Example Schema: CustomerCreate
+      🧮 Scorecard Metrics
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#security-config" class="md-nav__link">
+  <a href="#dashboard-dropdowns" class="md-nav__link">
     <span class="md-ellipsis">
-      🔐 Security &amp; Config
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      📂 Related Files
+      🧩 Dashboard Dropdowns
     </span>
   </a>
   
@@ -557,6 +548,15 @@
   <a href="#testing" class="md-nav__link">
     <span class="md-ellipsis">
       🧪 Testing
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      📂 Related Files
     </span>
   </a>
   
@@ -589,14 +589,14 @@
 
 <h1 id="api-documentation">🚀 API Documentation</h1>
 <p>This service exposes the <strong>REST API layer</strong> for the Customer Loyalty &amp; Analytics system. It powers the dashboard, segmentation visualizations, survival models, and automated email campaigns.</p>
-<p>Built with <strong>FastAPI</strong>, the API provides endpoints for querying customer data, analyzing transactions, generating RFM segments, and sending retention emails.</p>
+<p>Built with <strong>FastAPI</strong>, the API provides endpoints for querying customer data, analyzing transactions, generating RFM segments, launching email campaigns, and dashboard filters.</p>
 <hr />
 <h2 id="tech-stack">⚙️ Tech Stack</h2>
 <ul>
 <li><strong>FastAPI</strong> – Lightweight, fast web framework for REST endpoints</li>
 <li><strong>SQLAlchemy</strong> – ORM for interacting with PostgreSQL</li>
 <li><strong>Pydantic</strong> – Request validation &amp; API response schemas</li>
-<li><strong>Lifelines</strong> – Kaplan-Meier survival analysis</li>
+<li><strong>Lifelines</strong> – Weibull AFT survival analysis</li>
 <li><strong>BackgroundTasks</strong> – Async email dispatching</li>
 </ul>
 <hr />
@@ -606,61 +606,61 @@
 <li><code>POST /customers/</code> – Create a new customer  </li>
 <li><code>GET /customers/{id}</code> – Retrieve customer details  </li>
 <li><code>PUT /customers/{id}</code> – Update customer profile  </li>
-<li><code>DELETE /customers/{id}</code> – Remove a customer record</li>
-</ul>
-<p>Also includes:</p>
-<ul>
-<li><code>GET /analytics/customer-count-by-gender</code> – Gender-wise demographic distribution</li>
+<li><code>DELETE /customers/{id}</code> – Remove a customer record  </li>
+<li><code>GET /analytics/customer-count-by-gender</code> – Gender-wise customer distribution</li>
 </ul>
 <hr />
 <h2 id="transaction-revenue-analytics">💰 Transaction &amp; Revenue Analytics</h2>
 <p>Explore sales data using joins over the star schema:</p>
 <ul>
-<li><code>GET /revenue/monthly</code> – Monthly revenue totals</li>
-<li><code>GET /customers/{id}/transactions</code> – Full transaction history of a customer</li>
-<li><code>GET /analytics/transactions-by-store-month</code> – Monthly revenue by store</li>
-<li><code>GET /analytics/transaction-amount-by-store</code> – Lifetime revenue by store</li>
+<li><code>GET /revenue/monthly</code> – Monthly revenue totals  </li>
+<li><code>GET /customers/{id}/transactions</code> – Full transaction history of a customer  </li>
+<li><code>GET /analytics/transactions-by-store-month</code> – Monthly revenue by store  </li>
+<li><code>GET /analytics/transaction-amount-by-store</code> – Lifetime revenue by store  </li>
 </ul>
 <hr />
 <h2 id="rfm-segmentation">📊 RFM Segmentation</h2>
 <p>Provides data on <strong>Recency-Frequency-Monetary segments</strong>:</p>
 <ul>
-<li><code>GET /analytics/customers-by-segment/{segment}</code> – List of customers in a specific segment</li>
-<li><code>GET /analytics/segment-distribution/{all|male|female}</code> – Distribution of segments overall or by gender</li>
-<li><code>GET /analytics/rfm-matrix</code> – RFM matrix for segment summaries</li>
+<li><code>GET /analytics/customers-by-segment/{segment}</code> – List of customers in a specific segment  </li>
+<li><code>GET /analytics/segment-distribution/{all|male|female}</code> – Distribution of segments overall or by gender  </li>
+<li><code>GET /analytics/rfm-matrix</code> – RFM matrix for segment summaries  </li>
 </ul>
 <hr />
 <h2 id="email-campaigns">📧 Email Campaigns</h2>
 <p>Launch targeted retention campaigns via segment-specific email templates:</p>
 <ul>
-<li><code>GET /analytics/segments_for_button</code> – List of all segments for frontend dropdowns</li>
-<li><code>POST /campaigns/{segment}</code> – Asynchronously send emails to all users in a segment using <strong>BackgroundTasks</strong></li>
+<li><code>GET /analytics/segments_for_button</code> – List of all segments for frontend dropdowns  </li>
+<li><code>POST /campaigns/{segment}</code> – Asynchronously send emails to all users in a segment using <strong>BackgroundTasks</strong>  </li>
 </ul>
-<p>Each template includes personalized subject lines and discount codes. See logic in <code>EmailCampaignManager</code>.</p>
 <hr />
 <h2 id="survival-analysis">📈 Survival Analysis</h2>
-<p>Use Kaplan-Meier to visualize customer churn over time:</p>
+<p>Uses <strong>Weibull AFT</strong> to model customer churn over time:</p>
 <ul>
-<li><code>GET /analytics/survival-curve</code> – Returns survival probability at each time step using <code>SurvivalData</code></li>
+<li><code>GET /analytics/survival-curve</code> – Survival probability over time using <code>SurvivalData</code> with Age and Gender as covariates</li>
 </ul>
-<p>Supports visualization of customer retention lifecycle.</p>
 <hr />
-<h2 id="example-schema-customercreate">🛠️ Example Schema: <code>CustomerCreate</code></h2>
-<pre><code class="language-json">{
-  &quot;CustomerKey&quot;: 123,
-  &quot;CustomerCardCode&quot;: &quot;BNS1234567890&quot;,
-  &quot;Name&quot;: &quot;Jane Doe&quot;,
-  &quot;RegistrationDate&quot;: &quot;2020-01-01T00:00:00&quot;,
-  &quot;BirthDate&quot;: &quot;1990-05-10&quot;,
-  &quot;Gender&quot;: &quot;Female&quot;,
-  &quot;Phone&quot;: &quot;(555) 123-4567&quot;,
-  &quot;Address&quot;: &quot;123 Loyalty St.&quot;,
-  &quot;Email&quot;: &quot;jane.doe@example.com&quot;
-}
-</code></pre>
+<h2 id="scorecard-metrics">🧮 Scorecard Metrics</h2>
+<p>Returns KPIs used for dashboard summary tiles:</p>
+<ul>
+<li><code>GET /analytics/summary-scorecards</code> – Returns revenue, orders, and unique customer count<br />
+  Filters: <code>store_id</code>, <code>start_date</code>, <code>end_date</code>, <code>segment</code></li>
+</ul>
 <hr />
-<h2 id="security-config">🔐 Security &amp; Config</h2>
-<p>Sensitive credentials like DB URLs or Gmail credentials are stored in a <code>.env</code> file. Email logic uses OAuth-friendly app passwords.</p>
+<h2 id="dashboard-dropdowns">🧩 Dashboard Dropdowns</h2>
+<p>Provides values for dynamic filter controls:</p>
+<ul>
+<li><code>GET /dropdowns/stores</code> – List of store IDs and names  </li>
+<li><code>GET /dropdowns/segments</code> – All available RFM segments  </li>
+<li><code>GET /dropdowns/date-range</code> – Minimum and maximum transaction dates  </li>
+</ul>
+<hr />
+<h2 id="testing">🧪 Testing</h2>
+<p>Test endpoints locally using:</p>
+<ul>
+<li>Swagger UI: <a href="http://localhost:8000/docs"><code>localhost:8000/docs</code></a>  </li>
+<li>ReDoc: <a href="http://localhost:8000/redoc"><code>localhost:8000/redoc</code></a></li>
+</ul>
 <hr />
 <h2 id="related-files">📂 Related Files</h2>
 <table>
@@ -693,27 +693,20 @@
 </tr>
 <tr>
 <td><code>requirements.txt</code></td>
-<td>All dependencies (e.g., lifelines, fastapi, sqlalchemy)</td>
+<td>Python dependencies</td>
 </tr>
 </tbody>
 </table>
 <hr />
-<h2 id="testing">🧪 Testing</h2>
-<p>Test endpoints locally using:</p>
-<ul>
-<li>Swagger UI: <a href="http://localhost:8000/docs"><code>localhost:8000/docs</code></a>  </li>
-<li>ReDoc: <a href="http://localhost:8000/redoc"><code>localhost:8000/redoc</code></a></li>
-</ul>
-<hr />
 <h2 id="status">✅ Status</h2>
 <ul>
-<li>📬 Email logic tested for all segments</li>
-<li>📈 Survival curve rendered correctly</li>
-<li>✅ Endpoints verified via Swagger</li>
-<li>🐳 Works with Docker Compose stack</li>
+<li>📬 Email logic verified for all segments  </li>
+<li>📈 Weibull survival curve implemented  </li>
+<li>✅ Swagger-tested endpoints  </li>
+<li>🐳 Docker Compose ready  </li>
 </ul>
 <hr />
-<p>For more information, explore <a href="../">index.md</a>, <a href="../database/">database.md</a>, and <a href="../model/">model.md</a>.</p>
+<p>For more information, explore <a href="../">index.md</a>, <a href="../database/">database.md</a>, <a href="../app/">app.md</a> and [model.md].</p>
 
 
 

@@ -19,6 +19,7 @@ StoreTransactionSum, StoreMonthlyTransaction: Aggregate store-based revenue stat
 CustomerSegmentOut: Represents customers filtered by RFM segment (Recency, Frequency, Monetary).
 RFMSegmentBlock: Summary stats per segment for segmentation matrices.
 SurvivalCurvePoint: Represents data points used in Kaplan-Meier survival analysis.
+ScorecardMetric: Represents the metrics that are shown by scorecards
 '''
 
 
@@ -163,3 +164,12 @@ class SurvivalCurvePoint(BaseModel):
     survival_prob: float
     ci_lower: Optional[float] = None
     ci_upper: Optional[float] = None
+
+
+class ScorecardMetric(BaseModel):
+    """
+    Represents a single scorecard metric with a label and value.
+    Used for frontend visualizations like KPI cards.
+    """
+    label: str
+    value: float | int

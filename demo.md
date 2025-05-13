@@ -1,4 +1,4 @@
-# DS 223 Marketing Analytics – Group Project Demo
+# DS 223 Marketing Analytics – Group Project - Loyalytics
 
 ## Product Overview
 

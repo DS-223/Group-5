@@ -4,4 +4,4 @@ nav:
   - API: api.md
   - App: app.md
   - Database: database.md
-  - Models: model.md
+  - Model: model.md

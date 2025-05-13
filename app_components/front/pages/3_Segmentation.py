@@ -52,6 +52,10 @@ def fetch_segment_distribution():
     """
     Fetch the customer segment distribution from the provided API endpoint.
     
+    This function makes an API call to retrieve customer segment data. It then 
+    processes and returns it as a pandas DataFrame, sorted by the customer count 
+    in each segment.
+    
     Returns:
         pd.DataFrame: A sorted DataFrame of segments and their customer counts.
     """
@@ -97,6 +101,10 @@ def fetch_rfm_matrix():
     """
     Fetch the RFM (Recency, Frequency, Monetary) matrix from the provided API endpoint.
 
+    This function retrieves the RFM matrix data, processes it, and returns it 
+    as a pandas DataFrame containing customer details such as recency, frequency, 
+    and monetary scores.
+    
     Returns:
         pd.DataFrame: A DataFrame of the RFM matrix with customer details.
     """
@@ -172,7 +180,7 @@ if segments:
                     api_url = EMAIL_API_BASE.replace("{segment}", segment_api_friendly)
 
                     st.write(f"Launching campaign for segment: {selected_segment}")
-                    st.write(f"API URL: {api_url}")
+                    # st.write(f"API URL: {api_url}")  # <-- Removed from UI
 
                     response = requests.post(api_url)
                     response.raise_for_status()
@@ -184,5 +192,6 @@ if segments:
                     st.error(f"Failed to send campaign: {e}")
             else:
                 st.error("API_LAUNCH_CAMPAIGN_BASE not set in .env")
+
 else:
     st.info("No segments available to display.")

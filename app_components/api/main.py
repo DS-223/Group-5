@@ -4,7 +4,8 @@ from database import get_db, engine
 from columns import (FactTransaction, 
                      DimDate, DimCustomer, 
                      DimStore, 
-                     RFMResults)
+                     RFMResults, 
+                     SurvivalData)
 from schema import (CustomerCreate, 
                     CustomerOut, 
                     MonthlyRevenue, 
@@ -13,7 +14,8 @@ from schema import (CustomerCreate,
                     StoreTransactionSum, 
                     CustomerSegmentOut,
                     StoreMonthlyTransaction, 
-                    RFMSegmentBlock)
+                    RFMSegmentBlock, 
+                    SurvivalCurvePoint)
 from typing import List, Dict
 from sqlalchemy import func, cast, String, BigInteger, Float
 from datetime import datetime
@@ -23,6 +25,7 @@ import os
 from sqlalchemy import inspect
 from email_utils import EmailCampaignManager
 
+from lifelines import KaplanMeierFitter
 
 
 app = FastAPI(title="Customer Management API")
@@ -347,3 +350,69 @@ def rfm_matrix(db: Session = Depends(get_db)):
         ))
 
     return response
+
+
+#------------------------------------------------------------------------------------------------------
+#-----------------------------------------------Test Code----------------------------------------------
+#------------------------------------------------------------------------------------------------------
+# @app.get("/analytics/table-schema", response_model=List[TableSchema])
+# def get_table_schema():
+#     """
+#     Returns all table names with their column names and types.
+#     """
+#     # Ensure metadata is bound to the engine
+#     Base.metadata.bind = engine
+#     inspector = inspect(engine)
+
+#     result: List[TableSchema] = []
+
+#     for table_name in inspector.get_table_names():
+#         columns = inspector.get_columns(table_name)
+#         col_info = [
+#             ColumnInfo(name=col["name"], type=str(col["type"]))
+#             for col in columns
+#         ]
+#         result.append(TableSchema(table_name=table_name, columns=col_info))
+
+#     return result
+
+
+
+@app.get("/analytics/survival-curve", response_model=List[SurvivalCurvePoint])
+def get_survival_curve(db: Session = Depends(get_db)):
+    """
+    Returns Kaplan-Meier survival curve data: time points, survival probabilities,
+    and confidence intervals.
+    """
+    # Load duration and event from DB
+    data = db.query(SurvivalData.duration, SurvivalData.event).filter(
+        SurvivalData.duration.isnot(None),
+        SurvivalData.event.isnot(None)
+    ).all()
+
+    durations = [d[0] for d in data]
+    events = [d[1] for d in data]
+
+    if not durations or not events:
+        raise HTTPException(status_code=404, detail="No survival data available.")
+
+    # Fit Kaplan-Meier estimator
+    kmf = KaplanMeierFitter()
+    kmf.fit(durations, event_observed=events)
+
+    # Build response
+    results = []
+    for t, s, l, u in zip(
+        kmf.survival_function_.index,
+        kmf.survival_function_["KM_estimate"],
+        kmf.confidence_interval_["KM_estimate_lower_0.95"],
+        kmf.confidence_interval_["KM_estimate_upper_0.95"]
+    ):
+        results.append(SurvivalCurvePoint(
+            time=float(t),
+            survival_prob=float(s),
+            ci_lower=float(l),
+            ci_upper=float(u)
+        ))
+
+    return results

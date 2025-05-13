@@ -46,6 +46,10 @@ All services will spin up: ETL, API, Streamlit, PostgreSQL, and pgAdmin.
 - 🧪 FastAPI Docs: [http://localhost:8008/docs](http://localhost:8008/docs)
 - 🛠️ pgAdmin UI: [http://localhost:5050](http://localhost:5050)
 
+## For the Streamlit Personalized Search and Transaction History Search, try CustomerID: 70444
+## For the Streamlit Main page, set the dates (today's date is added automatically), real data range is **01/09/2024 - 14/04/2025**
+## For the FastApi customer-related calls, try CustomerID: 70444
+
 ### First Time pgAdmin Setup
 1. Go to [http://localhost:5050](http://localhost:5050)
 2. Login:

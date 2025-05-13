@@ -48,6 +48,9 @@ label_color = theme_teal if mode == "Light Mode" else theme_dark_text
 
 load_dotenv()
 API_URL = os.getenv("API_SEGMENTATION_ENDPOINT")
+SEGMENT_API = os.getenv("API_RFM_SEGMENTS_BUTTON")  # corresponds to /analytics/segments_for_button
+EMAIL_API_BASE = os.getenv("API_LAUNCH_CAMPAIGN_BASE")  # corresponds to /campaigns/{segment}
+API_MATRIX = os.getenv("API_SEGMENTATION_ENDPOINT_MATRIX")
 
 @st.cache_data(show_spinner=True)
 def fetch_segment_distribution():
@@ -106,3 +109,98 @@ if not df.empty:
 else:
     st.info("Segment distribution data not available.")
 
+
+@st.cache_data(show_spinner=True)
+def fetch_rfm_matrix():
+    try:
+        response = requests.get(API_MATRIX)
+        if response.status_code == 200:
+            return pd.DataFrame(response.json())
+        else:
+            st.error(f"Failed to fetch RFM matrix: {response.status_code}")
+            return pd.DataFrame()
+    except Exception as e:
+        st.error(f"Error fetching RFM matrix: {e}")
+        return pd.DataFrame()
+
+st.subheader("RFM Matrix Heatmap")
+
+rfm_df = fetch_rfm_matrix()
+
+if not rfm_df.empty:
+    rfm_df["recency_score"] = rfm_df["recency_score"].astype(int)
+    rfm_df["frequency_score"] = rfm_df["frequency_score"].astype(int)
+
+    # Create a custom label for tooltips
+    rfm_df["hover"] = (
+        "Segment: " + rfm_df["segment"] +
+        "<br>Users: " + rfm_df["user_count"].astype(str) +
+        "<br>Avg Monetary: $" + rfm_df["avg_monetary"].astype(str) +
+        "<br>User %: " + rfm_df["user_percent"].astype(str) + "%"
+    )
+
+    fig_matrix = px.density_heatmap(
+        rfm_df,
+        x="recency_score",
+        y="frequency_score",
+        z="user_count",
+        text_auto=True,
+        hover_name="hover",
+        color_continuous_scale="Teal",
+        labels={"user_count": "Users"},
+    )
+
+    fig_matrix.update_layout(
+        title=dict(
+            text="RFM Segmentation Matrix (Recency vs Frequency)",
+            font=dict(size=22, color=label_color)
+        ),
+        xaxis_title="Recency Score",
+        yaxis_title="Frequency Score",
+        font=dict(family="Segoe UI", size=13, color=label_color),
+        plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(t=60, b=60)
+    )
+
+    st.plotly_chart(fig_matrix, use_container_width=True)
+else:
+    st.info("RFM matrix data not available.")
+
+
+segments = []
+if SEGMENT_API:
+    try:
+        res = requests.get(SEGMENT_API)
+        res.raise_for_status()
+        segments = res.json()
+    except Exception as e:
+        st.error(f"Could not load segments: {e}")
+else:
+    st.warning("API_RFM_SEGMENTS_BUTTON not set in .env")
+
+if segments:
+    st.subheader("Select a Segment to Send Emails")
+    selected_segment = st.selectbox("🎯 RFM Segment", segments)
+
+    if selected_segment:
+        st.success(f"Segment selected: **{selected_segment}**")
+
+        if st.button("🚀 Launch Email Campaign"):
+            if EMAIL_API_BASE:
+                try:
+                    response = requests.post(f"{EMAIL_API_BASE}/{selected_segment}")
+                    response.raise_for_status()
+                    detail = response.json().get("detail", "")
+                    st.success(f"✅ {detail}")
+                except requests.exceptions.HTTPError as http_err:
+                    if response.status_code == 404:
+                        st.error(f"⚠️ {response.json().get('detail', 'No recipients found.')}")
+                    else:
+                        st.error(f"HTTP error: {http_err}")
+                except Exception as e:
+                    st.error(f"Failed to send campaign: {e}")
+            else:
+                st.error("API_LAUNCH_CAMPAIGN_BASE not set in .env")
+else:
+    st.info("No segments available to display.")

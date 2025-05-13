@@ -1,3 +1,47 @@
+'''
+This Python file defines the core FastAPI application for a Customer Loyalty and Analytics system. 
+It exposes RESTful API endpoints that interact with PostgreSQL tables using SQLAlchemy ORM,
+perform segmentation, calculate RFM scores, generate survival curves, and send email campaigns.
+
+Key Functional Areas:
+- Customer Management
+create_customer, get_customer, update_customer, delete_customer
+CRUD operations on customer records in the DimCustomer table.
+-Analytics & Reporting
+
+- Revenue and transaction endpoints:
+/revenue/monthly - Total revenue per month
+/customers/{customer_id}/transactions - All transactions for a customer
+/analytics/transactions-by-store-month - Monthly store-wise revenue
+/analytics/transaction-amount-by-store - Store-wise cumulative revenue
+
+- RFM Segmentation
+Returns customer data segmented by behavior:
+/analytics/customers-by-segment/{segment} - Customers in a specific segment
+/analytics/segment-distribution/{all|male|female} - Segment size breakdown
+
+- Email Campaign Management
+/campaigns/{segment} - Launches background email campaign to selected RFM segment
+/analytics/segments_for_button - Supports frontend dropdown for available segments
+
+
+RFM Matrix Overview
+/analytics/rfm-matrix - Returns data for matrix visualizations including segment size, avg. monetary value, and scores
+
+Customer Survival Analysis
+/analytics/survival-curve - Generates Kaplan-Meier survival curve using SurvivalData, modeling customer churn over time
+
+
+Technologies & Dependencies:
+FastAPI - API framework
+SQLAlchemy - ORM for database interaction
+Pydantic - Request/response schema validation
+Lifelines - Kaplan-Meier survival curve analysis
+PostgreSQL - Database backend
+BackgroundTasks - Async email dispatch
+This is the central service layer of the system, providing ready-to-use data and insights to drive dashboards, retention campaigns, and reporting tools.
+'''
+
 from fastapi import FastAPI, Depends, HTTPException, BackgroundTasks  
 from sqlalchemy.orm import Session
 from database import get_db, engine
@@ -36,7 +80,8 @@ app = FastAPI(title="Customer Management API")
 @app.post("/customers/", response_model=CustomerOut)
 async def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
     """
-    Creates a new customer record in the DimCustomer table.
+    Creates a new customer entry in the DimCustomer table.
+    Accepts customer data and returns the newly created customer record.
     """
     db_customer = DimCustomer(**customer.dict(by_alias=True))
     db.add(db_customer)
@@ -49,7 +94,8 @@ async def create_customer(customer: CustomerCreate, db: Session = Depends(get_db
 @app.get("/customers/{customer_id}", response_model=CustomerOut)
 async def get_customer(customer_id: int, db: Session = Depends(get_db)):
     """
-    Returns the customer with the specified CustomerKey.
+    Fetches a customer record by CustomerKey.
+    Raises 404 if the customer is not found.
     """
     customer = db.query(DimCustomer).filter(DimCustomer.CustomerKey == customer_id).first()
     if not customer:
@@ -62,7 +108,8 @@ async def get_customer(customer_id: int, db: Session = Depends(get_db)):
 @app.put("/customers/{customer_id}", response_model=CustomerOut)
 async def update_customer(customer_id: int, updated_data: CustomerCreate, db: Session = Depends(get_db)):
     """
-    Updates an existing customer record in the DimCustomer table.
+    Updates an existing customer record with new values.
+    Returns the updated customer or raises 404 if not found.
     """
     customer = db.query(DimCustomer).filter(DimCustomer.CustomerKey == customer_id).first()
     if not customer:
@@ -80,7 +127,8 @@ async def update_customer(customer_id: int, updated_data: CustomerCreate, db: Se
 @app.delete("/customers/{customer_id}")
 async def delete_customer(customer_id: int, db: Session = Depends(get_db)):
     """
-    Deletes a customer record from the DimCustomer table.
+    Deletes a customer by CustomerKey.
+    Returns a success message or raises 404 if the customer doesn't exist.
     """
     customer = db.query(DimCustomer).filter(DimCustomer.CustomerKey == customer_id).first()
     if not customer:
@@ -94,6 +142,10 @@ async def delete_customer(customer_id: int, db: Session = Depends(get_db)):
 
 @app.get("/analytics/customer-count-by-gender", response_model=List[GenderCount])
 def get_customer_count_by_gender(db: Session = Depends(get_db)):
+    """
+    Returns the number of customers grouped by gender.
+    Useful for demographic analysis.
+    """
     results = (
         db.query(
             DimCustomer.Gender.label("gender"),
@@ -137,7 +189,7 @@ def get_monthly_revenue(db: Session = Depends(get_db)):
 @app.get("/customers/{customer_id}/transactions", response_model=List[CustomerTransactionOut])
 def get_customer_transactions(customer_id: int, db: Session = Depends(get_db)):
     """
-    Returns all transactions made by a specific customer.
+    Retrieves all transactions made by a specific customer, ordered by date.
     """
     results = (
         db.query(
@@ -159,7 +211,8 @@ def get_customer_transactions(customer_id: int, db: Session = Depends(get_db)):
 @app.get("/analytics/transactions-by-store-month", response_model=List[StoreMonthlyTransaction])
 def transactions_by_store(db: Session = Depends(get_db)):
     """
-    Returns monthly transaction totals for each store.
+    Returns monthly total transaction amounts for each store.
+    Used for store-level revenue breakdowns.
     """
     results = (
         db.query(
@@ -188,6 +241,9 @@ def transactions_by_store(db: Session = Depends(get_db)):
 
 @app.get("/analytics/transaction-amount-by-store", response_model=List[StoreTransactionSum])
 def get_transaction_amount_by_store(db: Session = Depends(get_db)):
+    """
+    Returns total transaction amounts aggregated by store across all time.
+    """
     results = (
         db.query(
             DimStore.Name.label("store"),
@@ -200,12 +256,12 @@ def get_transaction_amount_by_store(db: Session = Depends(get_db)):
     return results
 
 #------------------------------------------------------------------------------------------------------
-#------------------------------By Customer Segment-----------------------------------------------------
+#------------------------------By Customer Segment RFM-------------------------------------------------
 #------------------------------------------------------------------------------------------------------
 @app.get("/analytics/customers-by-segment/{segment}", response_model=List[CustomerSegmentOut])
 def get_customers_by_segment(segment: str, db: Session = Depends(get_db)):
     """
-    Returns customers who belong to a given RFM segment.
+    Returns a list of customers belonging to a specific RFM segment.
     """
     results = (
         db.query(
@@ -234,7 +290,7 @@ def get_customers_by_segment(segment: str, db: Session = Depends(get_db)):
 @app.get("/analytics/segment-distribution/all")
 def get_segment_distribution_all(db: Session = Depends(get_db)):
     """
-    Returns total segment distribution.
+    Returns the overall count of customers per RFM segment.
     """
     results = (
         db.query(
@@ -251,7 +307,7 @@ def get_segment_distribution_all(db: Session = Depends(get_db)):
 @app.get("/analytics/segment-distribution/male")
 def get_segment_distribution_male(db: Session = Depends(get_db)):
     """
-    Returns segment distribution for males only.
+    Returns count of customers per segment for males only.
     """
     results = (
         db.query(
@@ -269,7 +325,7 @@ def get_segment_distribution_male(db: Session = Depends(get_db)):
 @app.get("/analytics/segment-distribution/female")
 def get_segment_distribution_female(db: Session = Depends(get_db)):
     """
-    Returns segment distribution for females only.
+    Returns count of customers per segment for females only.
     """
     results = (
         db.query(
@@ -298,6 +354,12 @@ def launch_campaign(
     background: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
+    """
+    Launches an email campaign for customers in the given RFM segment.
+
+    Emails are queued and sent asynchronously using BackgroundTasks.
+    Raises 404 if no email addresses are found for the segment.
+    """
     mgr = EmailCampaignManager(segment, engine, 'hayk_nalchajyan@edu.aua.am', 'uclr rwxq annw rksa')
     count = mgr.fetch_emails()
     if count == 0:
@@ -352,37 +414,15 @@ def rfm_matrix(db: Session = Depends(get_db)):
     return response
 
 
+
 #------------------------------------------------------------------------------------------------------
-#-----------------------------------------------Test Code----------------------------------------------
+#--------------------------------------------RFM Analysis----------------------------------------------
 #------------------------------------------------------------------------------------------------------
-# @app.get("/analytics/table-schema", response_model=List[TableSchema])
-# def get_table_schema():
-#     """
-#     Returns all table names with their column names and types.
-#     """
-#     # Ensure metadata is bound to the engine
-#     Base.metadata.bind = engine
-#     inspector = inspect(engine)
-
-#     result: List[TableSchema] = []
-
-#     for table_name in inspector.get_table_names():
-#         columns = inspector.get_columns(table_name)
-#         col_info = [
-#             ColumnInfo(name=col["name"], type=str(col["type"]))
-#             for col in columns
-#         ]
-#         result.append(TableSchema(table_name=table_name, columns=col_info))
-
-#     return result
-
-
-
 @app.get("/analytics/survival-curve", response_model=List[SurvivalCurvePoint])
 def get_survival_curve(db: Session = Depends(get_db)):
     """
-    Returns Kaplan-Meier survival curve data: time points, survival probabilities,
-    and confidence intervals.
+    Performs Kaplan-Meier survival analysis using duration and event columns.
+    Returns survival probabilities and confidence intervals over time.
     """
     # Load duration and event from DB
     data = db.query(SurvivalData.duration, SurvivalData.event).filter(

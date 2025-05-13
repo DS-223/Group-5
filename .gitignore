@@ -3,6 +3,10 @@ feedback/*.md
 tasks/
 # postgres data
 app_components/postgres_data/
+app_components/pgadmin_data
+
+# mkdocs site
+site/
 
 pycache/
 *.py[cod]

@@ -31,6 +31,12 @@ RFM Matrix Overview
 Customer Survival Analysis
 /analytics/survival-curve - Generates Kaplan-Meier survival curve using SurvivalData, modeling customer churn over time
 
+Scorecards with filtering 
+/analytics/summary-scorecards - Returns data for scorecards
+/dropdowns/stores - Allows to choose a store
+/dropdowns/segments - Allows to choose a segment
+/dropdowns/date-range - Allows to choose a date range
+
 
 Technologies & Dependencies:
 FastAPI - API framework
@@ -59,14 +65,14 @@ from schema import (CustomerCreate,
                     CustomerSegmentOut,
                     StoreMonthlyTransaction, 
                     RFMSegmentBlock, 
-                    SurvivalCurvePoint)
-from typing import List, Dict
-from sqlalchemy import func, cast, String, BigInteger, Float
+                    SurvivalCurvePoint, 
+                    ScorecardMetric)
+from typing import List, Dict, Optional
+from sqlalchemy import func, cast, BigInteger
 from datetime import datetime
 import pandas as pd
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
 import os
-from sqlalchemy import inspect
 from email_utils import EmailCampaignManager
 
 from lifelines import KaplanMeierFitter
@@ -456,3 +462,91 @@ def get_survival_curve(db: Session = Depends(get_db)):
         ))
 
     return results
+
+
+#------------------------------------------------------------------------------------------------------
+#---------------------------------------Scorecard Metrics----------------------------------------------
+#------------------------------------------------------------------------------------------------------
+@app.get("/analytics/summary-scorecards", response_model=List[ScorecardMetric])
+def get_summary_scorecards(
+    store_id: Optional[int] = None,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None,
+    segment: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """
+    Returns 3 metrics for dashboard scorecards:
+    - Total Revenue
+    - Total Orders
+    - Total Customers
+    Filters (optional):
+    - store_id (int)
+    - start_date (datetime)
+    - end_date (datetime)
+    - segment (str)
+    """
+    query = db.query(FactTransaction)
+
+    if start_date or end_date:
+        query = query.join(DimDate, FactTransaction.TransactionDateKey == DimDate.DateKey)
+    if segment:
+        query = query.join(DimCustomer, FactTransaction.CustomerKey == DimCustomer.CustomerKey)
+        query = query.join(RFMResults, RFMResults.card_code == cast(DimCustomer.CustomerCardCode, BigInteger))
+
+    if store_id is not None:
+        query = query.filter(FactTransaction.StoreKey == store_id)
+    if start_date is not None:
+        query = query.filter(DimDate.Date >= start_date)
+    if end_date is not None:
+        query = query.filter(DimDate.Date <= end_date)
+    if segment is not None:
+        query = query.filter(func.lower(RFMResults.segment) == segment.lower())
+
+    total_amount = query.with_entities(func.sum(FactTransaction.Amount)).scalar() or 0.0
+    total_orders = query.with_entities(func.count(FactTransaction.TransactionKey)).scalar() or 0
+    total_customers = query.with_entities(FactTransaction.CustomerKey).distinct().count()
+
+    return [
+        ScorecardMetric(label="Total Revenue", value=round(total_amount, 2)),
+        ScorecardMetric(label="Total Orders", value=total_orders),
+        ScorecardMetric(label="Total Customers", value=total_customers)
+    ]
+
+
+#------------------------------------------------------------------------------------------------------
+#------------------------------------Dropdowns for scorecards------------------------------------------
+#------------------------------------------------------------------------------------------------------
+@app.get("/dropdowns/stores", response_model=List[Dict[str, str]])
+def get_store_dropdown(db: Session = Depends(get_db)):
+    """
+    Returns available stores for dropdown selection.
+    """
+    stores = db.query(DimStore.StoreID, DimStore.Name).all()
+    return [{"value": str(sid), "label": name} for sid, name in stores]
+
+
+@app.get("/dropdowns/segments", response_model=List[str])
+def get_segment_dropdown(db: Session = Depends(get_db)):
+    """
+    Returns available RFM segments for dropdown.
+    """
+    segments = db.query(RFMResults.segment).distinct().all()
+    return [s[0] for s in segments if s[0] is not None]
+
+
+@app.get("/dropdowns/date-range", response_model=Dict[str, str])
+def get_date_range(db: Session = Depends(get_db)):
+    """
+    Returns min/max transaction dates for optional filtering.
+    """
+    result = (
+        db.query(func.min(DimDate.Date), func.max(DimDate.Date))
+        .join(FactTransaction, FactTransaction.TransactionDateKey == DimDate.DateKey)
+        .first()
+    )
+    min_date, max_date = result
+    return {
+        "min_date": min_date.strftime("%Y-%m-%d") if min_date else None,
+        "max_date": max_date.strftime("%Y-%m-%d") if max_date else None
+    }

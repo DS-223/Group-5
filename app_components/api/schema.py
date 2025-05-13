@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, date
 
 class CustomerOut(BaseModel):
@@ -84,3 +84,19 @@ class RFMSegmentBlock(BaseModel):
     avg_monetary: float
     recency_score: int
     frequency_score: int
+
+
+# class ColumnInfo(BaseModel):
+#     name: str
+#     type: str
+
+# class TableSchema(BaseModel):
+#     table_name: str
+#     columns: List[ColumnInfo]
+
+
+class SurvivalCurvePoint(BaseModel):
+    time: float
+    survival_prob: float
+    ci_lower: Optional[float] = None
+    ci_upper: Optional[float] = None

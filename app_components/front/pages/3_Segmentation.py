@@ -4,6 +4,7 @@ import pandas as pd
 import plotly.express as px
 from dotenv import load_dotenv
 import os
+import urllib.parse
 
 st.set_page_config(page_title="Customer Segmentation", layout="wide")
 st.title("Customer Segmentation")
@@ -48,8 +49,8 @@ label_color = theme_teal if mode == "Light Mode" else theme_dark_text
 
 load_dotenv()
 API_URL = os.getenv("API_SEGMENTATION_ENDPOINT")
-SEGMENT_API = os.getenv("API_RFM_SEGMENTS_BUTTON")  # corresponds to /analytics/segments_for_button
-EMAIL_API_BASE = os.getenv("API_LAUNCH_CAMPAIGN_BASE")  # corresponds to /campaigns/{segment}
+SEGMENT_API = os.getenv("API_RFM_SEGMENTS_BUTTON")  # /analytics/segments_for_button
+EMAIL_API_BASE = os.getenv("API_LAUNCH_CAMPAIGN_BASE")  # /campaigns/{segment}
 API_MATRIX = os.getenv("API_SEGMENTATION_ENDPOINT_MATRIX")
 
 @st.cache_data(show_spinner=True)
@@ -109,7 +110,6 @@ if not df.empty:
 else:
     st.info("Segment distribution data not available.")
 
-
 @st.cache_data(show_spinner=True)
 def fetch_rfm_matrix():
     try:
@@ -131,7 +131,6 @@ if not rfm_df.empty:
     rfm_df["recency_score"] = rfm_df["recency_score"].astype(int)
     rfm_df["frequency_score"] = rfm_df["frequency_score"].astype(int)
 
-    # Create a custom label for tooltips
     rfm_df["hover"] = (
         "Segment: " + rfm_df["segment"] +
         "<br>Users: " + rfm_df["user_count"].astype(str) +
@@ -167,7 +166,6 @@ if not rfm_df.empty:
 else:
     st.info("RFM matrix data not available.")
 
-
 segments = []
 if SEGMENT_API:
     try:
@@ -189,15 +187,20 @@ if segments:
         if st.button("🚀 Launch Email Campaign"):
             if EMAIL_API_BASE:
                 try:
-                    response = requests.post(f"{EMAIL_API_BASE}/{selected_segment}")
-                    response.raise_for_status()
+                    # Convert segment to match API path (remove spaces)
+                    segment_api_friendly = selected_segment.replace(" ", "")
+                    api_url = EMAIL_API_BASE.replace("{segment}", segment_api_friendly)
+
+                    st.write(f"Launching campaign for segment: {selected_segment}")
+                    st.write(f"API URL: {api_url}")  # Debugging URL
+
+                    # Send POST request to launch campaign
+                    response = requests.post(api_url)
+                    response.raise_for_status()  # Check for HTTP error status codes
                     detail = response.json().get("detail", "")
-                    st.success(f"✅ {detail}")
+                    st.success(f"✅ Campaign Launched! {detail}")
                 except requests.exceptions.HTTPError as http_err:
-                    if response.status_code == 404:
-                        st.error(f"⚠️ {response.json().get('detail', 'No recipients found.')}")
-                    else:
-                        st.error(f"HTTP error: {http_err}")
+                    st.error(f"HTTP error occurred: {http_err}")
                 except Exception as e:
                     st.error(f"Failed to send campaign: {e}")
             else:

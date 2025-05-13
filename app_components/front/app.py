@@ -68,5 +68,5 @@ else:
         </style>
     """, unsafe_allow_html=True)
 
-st.title("Welcome to the Dashboard")
+st.title("Loyalitics")
 st.markdown("Use the sidebar to navigate to different pages")

@@ -133,6 +133,7 @@ app_components/
 │       ├── 3_Segmentation.py
 │       ├── 4_Personalized_search.py
 │       ├── 5_Transaction_history.py
+│       ├── 6_Survival_analysis.py
 │
 ├── postgres_data/      → PostgreSQL volume
 ├── pgadmin_data/       → pgAdmin volume

@@ -1,3 +1,19 @@
+'''
+This file defines the SQLAlchemy ORM models for the database schema used in the Customer Loyalty and Analytics system. 
+Each class corresponds to a database table and specifies the structure, relationships, and primary keys.
+
+Key Components:
+
+DimDate: A dimension table for calendar-related metadata (date, day, month, etc.).
+DimCustomer: Stores customer demographics and contact details.
+DimStore: Contains information about physical store locations.
+FactTransaction: A fact table that logs all customer transactions, linked to date, customer, and store.
+RFMResults: Holds precomputed Recency-Frequency-Monetary (RFM) scores and segmentation data for customer profiling.
+SurvivalData: Stores processed records used for survival analysis, particularly tracking customer lifecycle duration and churn events.
+These models support analytical queries, API responses, and dashboard visualizations used throughout the application.
+'''
+
+
 from sqlalchemy import Column, Integer, String, Float, DateTime, Date, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
 from database import Base
@@ -22,15 +38,15 @@ class DimCustomer(Base):
     __tablename__ = "DimCustomer"
     __table_args__ = {'extend_existing': True}
 
-    CustomerKey       = Column(Integer, primary_key=True, autoincrement=True)
-    CustomerCardCode  = Column(String(20), unique=True)
-    Name              = Column(String(150))
-    RegistrationDate  = Column(DateTime)
-    BirthDate         = Column(DateTime)
-    Gender            = Column(String(150))
-    Phone             = Column(String(150))
-    Address           = Column(String(150))
-    Email             = Column(String(255), nullable=True)           # <-- NEW
+    CustomerKey = Column(Integer, primary_key=True, autoincrement=True)
+    CustomerCardCode = Column(String(20), unique=True)
+    Name = Column(String(150))
+    RegistrationDate = Column(DateTime)
+    BirthDate = Column(DateTime)
+    Gender = Column(String(150))
+    Phone = Column(String(150))
+    Address = Column(String(150))
+    Email = Column(String(255), nullable=True)          
     
     transactions = relationship("FactTransaction", back_populates="customer")
 

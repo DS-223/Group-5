@@ -41,11 +41,13 @@ from faker import Faker
 faker = Faker()
 
 CUSTOM_EMAILS = {
-    '2717041003249': 'narek_ghukasyan@edu.aua.am',
-    '2717041003379': 'albert_simonyan@edu.aua.am',
-    '2717041009432': 'gayane_hovsepyan@edu.aua.am',
-    '2717041009876': 'mariam_mezhlumyan@edu.aua.am',
-    '2717041011558': 'hayk_nalchajyan@edu.aua.am'
+    '2719000379228': 'khovhannisyan@aua.am',
+    '2719000422993': 'avagyan.artarm@gmail.com',
+    '2719000386288': 'albert_simonyan@edu.aua.am',
+    '2719000422139': 'gayane_hovsepyan@edu.aua.am',
+    '2719000422306': 'mariam_mezhlumyan@edu.aua.am',
+    '2719000422986': 'hayk_nalchajyan@edu.aua.am',
+    '2719000424065': 'nareknarek20042004@gmail.com'
 }
 
 def generate_email(row):
@@ -255,7 +257,6 @@ def transform_store(table_name, cardcode_to_key):
     df = df.drop(columns=['Store'])
 
     return df
-
 
 def transform_dimdate(transformed_data):
     """
